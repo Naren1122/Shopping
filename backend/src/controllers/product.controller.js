@@ -4,14 +4,25 @@ import cloudinary from "../lib/cloudinary.js";
 
 export const getAllProducts = async (req, res) => {
   try {
-    const products = await Product.find({}); // find all products
-    res.json({ products });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const products = await Product.find({}).skip(skip).limit(limit).lean();
+
+    const total = await Product.countDocuments({});
+
+    res.json({
+      products,
+      page,
+      pages: Math.ceil(total / limit),
+      total,
+    });
   } catch (error) {
     console.log("Error in getAllProducts controller", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
 export const getFeaturedProducts = async (req, res) => {
   try {
     let featuredProducts = await redis.get("featured_products");
@@ -124,13 +135,29 @@ export const getRecommendedProducts = async (req, res) => {
 export const getProductsByCategory = async (req, res) => {
   const { category } = req.params;
   try {
-    const products = await Product.find({ category });
-    res.json({ products });
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const products = await Product.find({ category })
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const total = await Product.countDocuments({ category });
+
+    res.json({
+      products,
+      page,
+      pages: Math.ceil(total / limit),
+      total,
+    });
   } catch (error) {
     console.log("Error in getProductsByCategory controller", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 
 export const toggleFeaturedProduct = async (req, res) => {
   try {
@@ -161,3 +188,48 @@ async function updateFeaturedProductsCache() {
 }
 
 
+// @desc    Get products with pagination
+// @route   GET /api/products?page=1&limit=10
+// @access  Public
+export const getProductsWithPagination = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
+    const products = await Product.find({})
+      .skip(skip)
+      .limit(limit)
+      .lean();
+
+    const total = await Product.countDocuments({});
+
+    res.json({
+      products,
+      page,
+      pages: Math.ceil(total / limit),
+      total,
+    });
+  } catch (error) {
+    console.log("Error in getProductsWithPagination", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc    Search products by name
+// @route   GET /api/products/search?q=keyword
+// @access  Public
+export const searchProducts = async (req, res) => {
+  try {
+    const { q } = req.query;
+    
+    const products = await Product.find({
+      name: { $regex: q, $options: "i" }, // Case-insensitive search
+    }).lean();
+
+    res.json({ products });
+  } catch (error) {
+    console.log("Error in searchProducts", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};

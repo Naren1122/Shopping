@@ -7,6 +7,9 @@ import productRoutes from "./routes/product.route.js";
 import cartRoutes from "./routes/cart.route.js";
 import couponRoutes from "./routes/coupon.route.js";
 import addressRoutes from "./routes/address.route.js";
+import wishlistRoutes from "./routes/wishlist.route.js";
+import reviewRoutes from "./routes/review.route.js";
+
 
 dotenv.config({ path: "./src/.env" });
 const app = express();
@@ -21,6 +24,10 @@ app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/coupons", couponRoutes);
 app.use("/api/addresses", addressRoutes);
+app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/reviews", reviewRoutes);
+
+
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
