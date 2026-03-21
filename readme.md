@@ -1,71 +1,209 @@
+# Bazar - E-commerce Platform
+
+A comprehensive e-commerce platform built with modern technologies, featuring AI-powered recommendations and Nepal's popular eSewa payment gateway.
+
 ## Project Overview
 
-This project was developed as a comprehensive guide to building a modern e-commerce platform. It covers everything from secure authentication and state management to payment processing and performance optimization using Redis.
+This project is a full-featured e-commerce platform designed for the Nepali market. It includes secure authentication, shopping cart, order management, AI recommendations, and eSewa payment integration.
 
 ## Technology Stack
 
 ### Backend (Node.js & Express)
 
-MongoDB & Mongoose: NoSQL database and ODM for scalable data modeling.
+| Technology          | Purpose                                  |
+| ------------------- | ---------------------------------------- |
+| Node.js             | JavaScript runtime                       |
+| Express.js          | Web framework for API                    |
+| MongoDB & Mongoose  | NoSQL database and ODM                   |
+| Redis (via Upstash) | Caching for performance                  |
+| JWT                 | Authentication (access + refresh tokens) |
+| bcryptjs            | Password hashing                         |
+| Cloudinary          | Image management                         |
+| Nodemailer          | Email notifications                      |
+| eSewa API           | Payment gateway (Nepal)                  |
+| Gemini AI           | AI product recommendations               |
 
-Express.js: Fast, unopinionated web framework for the API layer.
+### Frontend (Next.js)
 
-Stripe: Industry-standard payment processing integration.
+| Technology    | Purpose          |
+| ------------- | ---------------- |
+| Next.js       | React framework  |
+| Tailwind CSS  | Styling          |
+| shadcn/ui     | UI components    |
+| Recharts      | Analytics charts |
+| Axios         | HTTP client      |
+| Framer Motion | Animations       |
 
-JWT (JSON Web Tokens): Secure authentication with Access and Refresh tokens.
+---
 
-Redis (via Upstash): High-performance in-memory data store for caching featured products.
+## Features
 
-Cloudinary: Cloud-based image management for product media.
+### Core E-commerce Features
 
-bcryptjs: Secure password hashing.
-
-Cookie-parser: Middleware for handling browser-based security cookies.
-
-### Frontend (React.js)
-
-Tailwind CSS: Utility-first CSS framework for modern, responsive UI design.
-
-Zustand: Lightweight and fast state management.
-
-Framer Motion: Smooth, high-performance animations and transitions.
-
-Recharts: Dynamic data visualization for the Admin analytics dashboard.
-
-React Router Dom: Declarative routing for single-page application navigation.
-
-Axios: Promise-based HTTP client for API communication.
-
-React Hot Toast: Sleek, customizable popup notifications.
-
-## Key Features
+- ✅ **Order Management** - Create, track, and manage orders with order status updates
+- ✅ **Checkout Process** - Complete purchase flow from cart to order completion
+- ✅ **Payment Integration** - eSewa payment gateway (Nepal's leading payment processor)
+- ✅ **Order History** - Users can view past purchases with detailed order information
 
 ### User Features
 
-Secure Authentication: Robust login/signup flow with token-based persistence.
+- ✅ **Authentication** - Secure signup/login with JWT tokens
+- ✅ **Profile Management** - View and edit profile information
+- ✅ **Shopping Cart** - Real-time cart with persistent storage
+- ✅ **Wishlist** - Add/remove products to wishlist, view wishlist
+- ✅ **User Addresses** - Manage multiple shipping addresses (add, edit, delete, set default)
+- ✅ **Order Tracking** - Real-time order status tracking for users
 
-Product Discovery: Browse and filter products by categories.
+### Product Features
 
-Shopping Cart: Real-time cart management with persistent storage.
-
-Checkout System: Integrated Stripe Checkout for secure credit card transactions.
-
-Coupon System: Functional discount code application at checkout.
+- ✅ **Product Browsing** - Browse and filter products by categories
+- ✅ **Product Search** - Full-text search across products
+- ✅ **Pagination** - Proper pagination for all product listings
+- ✅ **Product Reviews/Ratings** - Users can rate and review products
+- ✅ **Featured Products** - Highlight products on homepage
+- ✅ **Product Recommendations** - AI-powered recommendations using Gemini API
 
 ### Admin Features
 
-Admin Dashboard: Centralized hub for store management.
+- ✅ **Admin Dashboard** - Centralized hub for store management
+- ✅ **Analytics** - Sales analytics, order statistics, revenue tracking via Recharts
+- ✅ **Product Management** - Full CRUD operations for products
+- ✅ **Featured Toggle** - Highlight specific products on homepage
 
-Analytics & Data: Visual sales tracking and performance metrics via Recharts.
+### Notifications
 
-Product Management: Full CRUD operations (Create, Read, Update, Delete) for products.
+- ✅ **Email Notifications** - Order confirmation, status updates via Nodemailer
 
-Featured Toggle: Ability to highlight specific products on the homepage.
+---
 
-## Optimization & Security
+## API Endpoints
 
-Redis Caching: Drastically reduces database load by caching frequently accessed data.
+### Authentication (`/api/auth`)
 
-Data Protection: Implements best practices for handling sensitive user info and payments.
+- `POST /api/auth/signup` - User registration
+- `POST /api/auth/login` - User login
+- `POST /api/auth/logout` - User logout
+- `POST /api/auth/refresh-token` - Refresh access token
+- `POST /api/auth/forgot-password` - Request password reset
+- `POST /api/auth/reset-password` - Reset password
+- `GET /api/auth/profile` - Get user profile (protected)
 
-Token Rotation: Uses refresh tokens to keep users logged in securely without frequent re-authentication.
+### Products (`/api/products`)
+
+- `GET /api/products` - Get all products (admin)
+- `GET /api/products/featured` - Get featured products
+- `GET /api/products/category/:category` - Get products by category
+- `GET /api/products/recommendations` - Get AI recommendations
+- `GET /api/products/search` - Search products
+- `POST /api/products` - Create product (admin)
+- `PATCH /api/products/:id` - Update product (admin)
+- `DELETE /api/products/:id` - Delete product (admin)
+
+### Cart (`/api/cart`)
+
+- `GET /api/cart` - Get cart items
+- `POST /api/cart` - Add item to cart
+- `PUT /api/cart/:id` - Update item quantity
+- `DELETE /api/cart` - Remove item(s) from cart
+
+### Wishlist (`/api/wishlist`)
+
+- `GET /api/wishlist` - Get wishlist
+- `POST /api/wishlist` - Add to wishlist
+- `DELETE /api/wishlist/:id` - Remove from wishlist
+
+### Orders (`/api/orders`)
+
+- `GET /api/orders` - Get user orders
+- `POST /api/orders` - Create order
+- `GET /api/orders/:id` - Get order details
+- `PATCH /api/orders/:id/status` - Update order status (admin)
+
+### Addresses (`/api/addresses`)
+
+- `GET /api/addresses` - Get user addresses
+- `POST /api/addresses` - Add address
+- `PUT /api/addresses/:id` - Update address
+- `DELETE /api/addresses/:id` - Delete address
+- `PATCH /api/addresses/:id/default` - Set default address
+
+### Payments (`/api/payments`)
+
+- `POST /api/payments/esewa/initiate` - Initiate eSewa payment
+- `POST /api/payments/esewa/verify` - Verify eSewa payment
+
+### Reviews (`/api/reviews`)
+
+- `GET /api/reviews/product/:productId` - Get product reviews
+- `POST /api/reviews` - Create review
+
+### Coupons (`/api/coupons`)
+
+- `GET /api/coupons` - Get user coupon
+- `POST /api/coupons/validate` - Validate coupon
+
+---
+
+## Security Features
+
+- JWT Authentication with Access and Refresh tokens
+- HTTP-only cookies for token storage
+- Password hashing with bcryptjs
+- Protected routes with middleware
+- CORS configuration
+- Input validation
+
+---
+
+## Performance Optimization
+
+- Redis caching for featured products and recommendations
+- MongoDB indexing for fast queries
+- Pagination for large datasets
+- Cloudinary CDN for images
+
+---
+
+## Getting Started
+
+### Prerequisites
+
+- Node.js 18+
+- MongoDB
+- Redis (Upstash)
+- Cloudinary account
+- eSewa merchant account
+
+### Installation
+
+```bash
+# Install backend dependencies
+cd backend
+npm install
+
+# Install frontend dependencies
+cd ../frontend
+npm install
+```
+
+### Environment Variables
+
+Create `.env` files with required variables (see `.env.example`)
+
+### Running the Application
+
+```bash
+# Backend
+cd backend
+npm run dev
+
+# Frontend
+cd frontend
+npm run dev
+```
+
+---
+
+## License
+
+ISC
