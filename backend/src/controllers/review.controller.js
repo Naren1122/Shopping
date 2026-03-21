@@ -52,6 +52,19 @@ export const createReview = async (req, res) => {
   try {
     const { productId, rating, comment } = req.body;
 
+    // Check if user has ordered and received this product
+    const order = await Order.findOne({
+      user: req.user._id,
+      "orderItems.product": productId,
+      orderStatus: "delivered", // Must be delivered
+    });
+
+    if (!order) {
+      return res.status(403).json({
+        message: "You can only review products you have purchased and received",
+      });
+    }
+
     // Check if product exists
     const product = await Product.findById(productId);
     if (!product) {

@@ -9,6 +9,9 @@ import couponRoutes from "./routes/coupon.route.js";
 import addressRoutes from "./routes/address.route.js";
 import wishlistRoutes from "./routes/wishlist.route.js";
 import reviewRoutes from "./routes/review.route.js";
+import orderRoutes from "./routes/order.route.js";
+import paymentRoutes from "./routes/payment.route.js";
+
 
 
 dotenv.config({ path: "./src/.env" });
@@ -26,6 +29,8 @@ app.use("/api/coupons", couponRoutes);
 app.use("/api/addresses", addressRoutes);
 app.use("/api/wishlist", wishlistRoutes);
 app.use("/api/reviews", reviewRoutes);
+app.use("/api/orders", orderRoutes);
+app.use("/api/payments", paymentRoutes);
 
 
 
