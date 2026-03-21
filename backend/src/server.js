@@ -1,6 +1,7 @@
 import express from "express";
 import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
+import cors from "cors";
 import { connectDB } from "./lib/db.js";
 import authRoutes from "./routes/auth.route.js";
 import productRoutes from "./routes/product.route.js";
@@ -14,12 +15,17 @@ import paymentRoutes from "./routes/payment.route.js";
 import recommendationRoutes from "./routes/recommendation.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
 
-
-
 dotenv.config({ path: "./src/.env" });
 const app = express();
 connectDB();
 const PORT = process.env.PORT || 5001;
+
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  }),
+);
 
 app.use(express.json({ limit: "10mb" })); // allows us to parse incoming requests with JSON payloads
 
@@ -35,8 +41,6 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/analytics", analyticsRoutes);
-
-
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);

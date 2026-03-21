@@ -27,8 +27,8 @@ console.log(
  */
 export const sendPasswordResetEmail = async (email, resetToken) => {
   try {
-    // Generate reset URL - update this to match your frontend URL
-    const resetURL = `http://localhost:3000/reset-password/${resetToken}`;
+    // Generate reset URL - using query parameter format
+    const resetURL = `http://localhost:3000/reset-password?token=${resetToken}`;
 
     const mailOptions = {
       from: process.env.EMAIL_USER,
