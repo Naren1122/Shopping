@@ -31,7 +31,7 @@ const setCookies = (res, accessToken, refreshToken) => {
 };
 
 export const signup = async (req, res) => {
-  const { email, password, name } = req.body;
+  const { email, password, name, adminSecretKey } = req.body;
   try {
     const userExists = await User.findOne({ email });
 
@@ -39,7 +39,13 @@ export const signup = async (req, res) => {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    const user = await User.create({ name, email, password });
+    // Check if admin secret key is provided and valid
+    let role = "customer"; // Default role
+    if (adminSecretKey && adminSecretKey === process.env.ADMIN_SECRET_KEY) {
+      role = "admin";
+    }
+
+    const user = await User.create({ name, email, password, role });
 
     // authenticate
     const { accessToken, refreshToken } = generateTokens(user._id);
@@ -187,11 +193,9 @@ export const forgotPassword = async (req, res) => {
       user.resetPasswordExpires = undefined;
       await user.save();
 
-      return res
-        .status(500)
-        .json({
-          message: "Failed to send password reset email. Please try again.",
-        });
+      return res.status(500).json({
+        message: "Failed to send password reset email. Please try again.",
+      });
     }
 
     res.status(200).json({
@@ -245,12 +249,10 @@ export const resetPassword = async (req, res) => {
 
     await user.save();
 
-    res
-      .status(200)
-      .json({
-        message:
-          "Password reset successful. You can now login with your new password.",
-      });
+    res.status(200).json({
+      message:
+        "Password reset successful. You can now login with your new password.",
+    });
   } catch (error) {
     console.error("Error in resetPassword controller:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
