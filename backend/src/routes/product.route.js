@@ -6,6 +6,7 @@ import {
   getFeaturedProducts,
   getProductsByCategory,
   getRecommendedProducts,
+  getProductById,
   toggleFeaturedProduct,
   searchProducts,
   updateProduct,
@@ -19,6 +20,7 @@ router.get("/search", searchProducts); // New search endpoint
 router.get("/featured", getFeaturedProducts);
 router.get("/category/:category", getProductsByCategory); // Now supports ?page=1&limit=10
 router.get("/recommendations", getRecommendedProducts);
+router.get("/:id", getProductById); // Get single product by ID
 
 // Admin routes (protected)
 router.post("/", protectRoute, adminRoute, createProduct);

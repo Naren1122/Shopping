@@ -1,6 +1,6 @@
 import Product from "../models/product.model.js";
-
 import cloudinary from "../lib/cloudinary.js";
+import { redis } from "../lib/redis.js";
 
 export const getAllProducts = async (req, res) => {
   try {
@@ -9,7 +9,6 @@ export const getAllProducts = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const products = await Product.find({}).skip(skip).limit(limit).lean();
-
     const total = await Product.countDocuments({});
 
     res.json({
@@ -23,22 +22,35 @@ export const getAllProducts = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
+
 export const getFeaturedProducts = async (req, res) => {
+  const { category } = req.query;
   try {
+    // Build query: filter by isFeatured and optionally by category
+    const query = { isFeatured: true };
+    if (category && category !== "all") {
+      query.category = { $regex: new RegExp(`^${category}$`, "i") };
+    }
+
     // Try to get from Redis cache
     try {
-      const cached = await redis.get("featured_products");
+      const cacheKey =
+        category && category !== "all"
+          ? `featured_products_${category}`
+          : "featured_products";
+      const cached = await redis.get(cacheKey);
       if (cached) {
         return res.json(JSON.parse(cached));
       }
     } catch (redisError) {
-      console.log("Redis get error, falling back to MongoDB:", redisError.message);
+      console.log(
+        "Redis get error, falling back to MongoDB:",
+        redisError.message,
+      );
     }
 
     // if not in redis, fetch from mongodb
-    // .lean() is gonna return a plain javascript object instead of a mongodb document
-    // which is good for performance
-    const featuredProducts = await Product.find({ isFeatured: true }).lean();
+    const featuredProducts = await Product.find(query).lean();
 
     if (!featuredProducts) {
       return res.status(404).json({ message: "No featured products found" });
@@ -46,7 +58,11 @@ export const getFeaturedProducts = async (req, res) => {
 
     // Try to store in redis for future quick access
     try {
-      await redis.set("featured_products", JSON.stringify(featuredProducts));
+      const cacheKey =
+        category && category !== "all"
+          ? `featured_products_${category}`
+          : "featured_products";
+      await redis.set(cacheKey, JSON.stringify(featuredProducts));
     } catch (redisError) {
       console.log("Redis set error:", redisError.message);
     }
@@ -99,41 +115,15 @@ export const deleteProduct = async (req, res) => {
       const publicId = product.image.split("/").pop().split(".")[0];
       try {
         await cloudinary.uploader.destroy(`products/${publicId}`);
-        console.log("deleted image from cloduinary");
       } catch (error) {
-        console.log("error deleting image from cloduinary", error);
+        console.log("error deleting image from cloudinary", error);
       }
     }
 
     await Product.findByIdAndDelete(req.params.id);
-
     res.json({ message: "Product deleted successfully" });
   } catch (error) {
     console.log("Error in deleteProduct controller", error.message);
-    res.status(500).json({ message: "Server error", error: error.message });
-  }
-};
-
-export const getRecommendedProducts = async (req, res) => {
-  try {
-    const products = await Product.aggregate([
-      {
-        $sample: { size: 4 },
-      },
-      {
-        $project: {
-          _id: 1,
-          name: 1,
-          description: 1,
-          image: 1,
-          price: 1,
-        },
-      },
-    ]);
-
-    res.json(products);
-  } catch (error) {
-    console.log("Error in getRecommendedProducts controller", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
@@ -145,12 +135,17 @@ export const getProductsByCategory = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const products = await Product.find({ category })
+    // Use case-insensitive regex for category matching
+    const products = await Product.find({
+      category: { $regex: new RegExp(`^${category}$`, "i") },
+    })
       .skip(skip)
       .limit(limit)
       .lean();
 
-    const total = await Product.countDocuments({ category });
+    const total = await Product.countDocuments({
+      category: { $regex: new RegExp(`^${category}$`, "i") },
+    });
 
     res.json({
       products,
@@ -227,8 +222,6 @@ export const updateProduct = async (req, res) => {
 
 async function updateFeaturedProductsCache() {
   try {
-    // The lean() method  is used to return plain JavaScript objects instead of full Mongoose documents. This can significantly improve performance
-
     const featuredProducts = await Product.find({ isFeatured: true }).lean();
     await redis.set("featured_products", JSON.stringify(featuredProducts));
   } catch (error) {
@@ -246,7 +239,6 @@ export const getProductsWithPagination = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const products = await Product.find({}).skip(skip).limit(limit).lean();
-
     const total = await Product.countDocuments({});
 
     res.json({
@@ -269,7 +261,7 @@ export const searchProducts = async (req, res) => {
     const { q } = req.query;
 
     const products = await Product.find({
-      name: { $regex: q, $options: "i" }, // Case-insensitive search
+      name: { $regex: q, $options: "i" },
     }).lean();
 
     res.json({ products });
@@ -279,3 +271,47 @@ export const searchProducts = async (req, res) => {
   }
 };
 
+// @desc    Get recommended products
+// @route   GET /api/products/recommendations
+// @access  Public
+export const getRecommendedProducts = async (req, res) => {
+  try {
+    const products = await Product.aggregate([
+      {
+        $sample: { size: 4 },
+      },
+      {
+        $project: {
+          _id: 1,
+          name: 1,
+          description: 1,
+          image: 1,
+          price: 1,
+        },
+      },
+    ]);
+
+    res.json(products);
+  } catch (error) {
+    console.log("Error in getRecommendedProducts controller", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// @desc    Get single product by ID
+// @route   GET /api/products/:id
+// @access  Public
+export const getProductById = async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id);
+
+    if (!product) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    res.json(product);
+  } catch (error) {
+    console.log("Error in getProductById controller", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
