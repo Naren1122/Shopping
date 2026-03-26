@@ -490,10 +490,8 @@ After completing each step:
 | 2     | Second   | Homepage is the entry point             |
 | 3-4   | Third    | Core shopping experience                |
 | 5-6   | Fourth   | Cart and wishlist                       |
-| 7-8   | Fifth    | Checkout flow                           |
-| 9     | Sixth    | User account                            |
-| 10    | Seventh  | AI feature                              |
-| 11-14 | Eighth   | Admin features (last)                   |
+| 7-10  | Fifth    | User features (checkout, orders, AI)    |
+| 11-14 | Sixth    | Admin features                          |
 
 ---
 
