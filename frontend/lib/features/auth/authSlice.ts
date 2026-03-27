@@ -137,6 +137,43 @@ export const fetchProfile = createAsyncThunk(
   },
 );
 
+export const updateProfile = createAsyncThunk(
+  "auth/updateProfile",
+  async (
+    profileData: { name?: string; email?: string },
+    { rejectWithValue },
+  ) => {
+    try {
+      const token =
+        typeof window !== "undefined" ? localStorage.getItem("token") : null;
+
+      if (!token) {
+        return rejectWithValue("No token found");
+      }
+
+      const response = await fetch("http://localhost:5000/api/auth/profile", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(profileData),
+        credentials: "include",
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        return rejectWithValue(data.message || "Failed to update profile");
+      }
+
+      return data;
+    } catch (error) {
+      return rejectWithValue("Network error. Please try again.");
+    }
+  },
+);
+
 // Auth slice
 const authSlice = createSlice({
   name: "auth",
@@ -245,6 +282,28 @@ const authSlice = createSlice({
         state.user = null;
         state.token = null;
         state.isAuthenticated = false;
+      })
+      // Update Profile
+      .addCase(updateProfile.pending, (state) => {
+        state.isLoading = true;
+        state.error = null;
+      })
+      .addCase(updateProfile.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.user = {
+          id: action.payload._id,
+          email: action.payload.email,
+          name: action.payload.name,
+          role: action.payload.role,
+        };
+        // Update localStorage
+        if (typeof window !== "undefined") {
+          localStorage.setItem("user", JSON.stringify(state.user));
+        }
+      })
+      .addCase(updateProfile.rejected, (state, action) => {
+        state.isLoading = false;
+        state.error = action.payload as string;
       });
   },
 });

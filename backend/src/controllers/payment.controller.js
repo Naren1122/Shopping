@@ -78,9 +78,10 @@ export const initiateEsewaPayment = async (req, res) => {
     console.log("[eSewa] Merchant ID:", merchantId);
 
     // Test with known eSewa docs example
-    const testSignatureData = "110,241028,EPAYTEST";
+    const testSignatureData =
+      "total_amount=110,transaction_uuid=241028,product_code=EPAYTEST";
     const testSignature = generateSignature(testSignatureData, secretKey);
-    console.log("[eSewa] Test (110,241028,EPAYTEST):", testSignature);
+    console.log("[eSewa] Test:", testSignature);
     console.log(
       "[eSewa] Expected:",
       "i94zsd3oXF6ZsSr/kGqT4sSzYQzjj1W/waxjWyRwaME=",
@@ -179,26 +180,29 @@ export const esewaSuccess = async (req, res) => {
     // Verify signature if available
     const secretKey = ESEWA_TEST_SECRET_KEY;
     if (signature && signed_field_names && secretKey) {
+      // Build signature data with field names like request
       const fields = String(signed_field_names).split(",");
       const dataString = fields
         .map((field) => {
-          switch (field.trim()) {
+          const fieldName = field.trim();
+          switch (fieldName) {
             case "transaction_code":
-              return transaction_code;
+              return `transaction_code=${transaction_code}`;
             case "status":
-              return status;
+              return `status=${status}`;
             case "total_amount":
-              return total_amount;
+              return `total_amount=${total_amount}`;
             case "transaction_uuid":
-              return transaction_uuid;
+              return `transaction_uuid=${transaction_uuid}`;
             case "product_code":
-              return product_code;
+              return `product_code=${product_code}`;
             case "signed_field_names":
-              return signed_field_names;
+              return `signed_field_names=${signed_field_names}`;
             default:
               return "";
           }
         })
+        .filter((f) => f)
         .join(",");
 
       const isValid = verifySignature(dataString, String(signature), secretKey);
@@ -221,6 +225,7 @@ export const esewaSuccess = async (req, res) => {
       transaction_uuid,
     });
 
+    // Redirect to frontend success page
     res.redirect(
       `${process.env.FRONTEND_URL}/payment-success?status=${status}&transactionId=${transaction_code}`,
     );
@@ -246,32 +251,9 @@ export const esewaFailure = async (req, res) => {
   });
 
   try {
-    // Extract order ID from transaction_uuid
-    let orderId = null;
-    if (transaction_uuid) {
-      const parts = String(transaction_uuid).split("-");
-      if (parts.length > 1) {
-        orderId = parts[0];
-      }
-    }
-
-    if (orderId) {
-      const order = await Order.findById(orderId);
-      if (order) {
-        order.paymentStatus = "failed";
-        await order.save();
-
-        const payment = await Payment.findOne({ order: orderId });
-        if (payment) {
-          payment.status = "failed";
-          payment.failureReason = error_message || status;
-          await payment.save();
-        }
-      }
-    }
-
+    // Redirect to frontend failure page
     res.redirect(
-      `${process.env.FRONTEND_URL}/payment-failed?orderId=${orderId || ""}&reason=${error_message || status || "cancelled"}`,
+      `${process.env.FRONTEND_URL}/payment-failed?reason=${error_message || status || "cancelled"}`,
     );
   } catch (error) {
     console.error("Error processing eSewa failure callback:", error);

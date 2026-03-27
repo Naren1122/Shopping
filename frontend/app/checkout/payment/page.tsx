@@ -182,12 +182,14 @@ export default function CheckoutPaymentPage() {
           localStorage.removeItem("checkoutItems");
           localStorage.removeItem("selectedAddress");
 
+          // Store order ID in localStorage so we can fetch details after payment
+          localStorage.setItem("pendingOrderId", order._id);
+
           // Create and submit eSewa form programmatically
           // This follows the official eSewa form submission format
           const form = document.createElement("form");
           form.method = "POST";
           form.action = paymentData.paymentUrl;
-          form.target = "_blank"; // Open in new tab
 
           // Add all required eSewa parameters
           const params = [

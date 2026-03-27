@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import {
   CheckCircle,
   Package,
@@ -37,17 +37,54 @@ interface OrderDetails {
 
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
-  const orderId = searchParams.get("orderId");
+  const router = useRouter();
+
+  // Check if user has a token in localStorage (more reliable than Redux state after redirect)
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
+  // Get orderId from URL first, then from localStorage
+  const urlOrderId = searchParams.get("orderId");
+  const [orderId, setOrderId] = useState<string | null>(urlOrderId);
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
+  // Check authentication from localStorage (survives server-side redirects)
   useEffect(() => {
-    if (orderId) {
+    const token = localStorage.getItem("token");
+    setIsAuthenticated(!!token);
+    setAuthChecked(true);
+  }, []);
+
+  // Redirect to login if not authenticated after checking
+  useEffect(() => {
+    if (authChecked && !isAuthenticated) {
+      router.push("/login");
+    }
+  }, [authChecked, isAuthenticated, router]);
+
+  // Try to get orderId from localStorage if not in URL
+  useEffect(() => {
+    if (!urlOrderId && isAuthenticated) {
+      const storedOrderId = localStorage.getItem("pendingOrderId");
+      if (storedOrderId) {
+        setOrderId(storedOrderId);
+      }
+    }
+  }, [urlOrderId, isAuthenticated]);
+
+  // Fetch order details when orderId is available
+  useEffect(() => {
+    if (orderId && isAuthenticated) {
       fetchOrderDetails();
     }
-  }, [orderId]);
+  }, [orderId, isAuthenticated]);
 
   const fetchOrderDetails = async () => {
+    if (!orderId) {
+      setIsLoading(false);
+      return;
+    }
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
@@ -62,6 +99,8 @@ export default function PaymentSuccessPage() {
       if (response.ok) {
         const data = await response.json();
         setOrder(data);
+        // Clear the pending order ID after successful fetch
+        localStorage.removeItem("pendingOrderId");
       }
     } catch (error) {
       console.error("Error fetching order:", error);
@@ -69,6 +108,56 @@ export default function PaymentSuccessPage() {
       setIsLoading(false);
     }
   };
+
+  // Show loading while checking auth or not authenticated
+  if (!authChecked || (!isAuthenticated && !isLoading)) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // If no orderId but authenticated, show generic success
+  if (!orderId) {
+    return (
+      <div className="min-h-screen flex flex-col bg-background">
+        <Navbar />
+        <main className="flex-1 container mx-auto px-4 py-16">
+          <div className="max-w-2xl mx-auto">
+            <div className="text-center mb-12">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 mb-6">
+                <CheckCircle className="h-10 w-10 text-green-600" />
+              </div>
+              <h1 className="text-3xl font-bold mb-2">
+                Order Placed Successfully!
+              </h1>
+              <p className="text-muted-foreground">
+                Thank you for your order. We&apos;ll send you a confirmation
+                email shortly.
+              </p>
+            </div>
+            <div className="text-center">
+              <Link href="/dashboard">
+                <Button className="bg-primary hover:bg-primary/90">
+                  View My Orders
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -150,22 +239,20 @@ export default function PaymentSuccessPage() {
                             Rs. {item.price.toLocaleString()} × {item.quantity}
                           </p>
                         </div>
-                        <div className="text-right">
-                          <p className="font-medium">
-                            Rs. {(item.price * item.quantity).toLocaleString()}
-                          </p>
-                        </div>
+                        <p className="font-medium">
+                          Rs. {(item.price * item.quantity).toLocaleString()}
+                        </p>
                       </div>
                     ))}
                   </div>
                 </div>
 
                 {/* Total */}
-                <div className="border-t pt-4">
-                  <div className="flex justify-between text-lg font-semibold">
-                    <span>Total Paid</span>
-                    <span>Rs. {order.totalPrice.toLocaleString()}</span>
-                  </div>
+                <div className="border-t pt-4 flex justify-between items-center">
+                  <p className="font-semibold">Total Amount</p>
+                  <p className="text-xl font-bold">
+                    Rs. {order.totalPrice.toLocaleString()}
+                  </p>
                 </div>
               </CardContent>
             </Card>
@@ -174,22 +261,23 @@ export default function PaymentSuccessPage() {
           {/* Loading State */}
           {isLoading && (
             <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
               <p className="text-muted-foreground">Loading order details...</p>
             </div>
           )}
 
           {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/">
-              <Button variant="outline" size="lg" className="w-full sm:w-auto">
+            <Link href="/dashboard">
+              <Button className="w-full sm:w-auto">
                 <Home className="mr-2 h-4 w-4" />
-                Continue Shopping
+                Go to Dashboard
               </Button>
             </Link>
-            <Link href="/orders">
-              <Button size="lg" className="w-full sm:w-auto">
+            <Link href="/products">
+              <Button variant="outline" className="w-full sm:w-auto">
                 <ShoppingBag className="mr-2 h-4 w-4" />
-                View My Orders
+                Continue Shopping
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Button>
             </Link>
