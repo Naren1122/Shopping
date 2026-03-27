@@ -30,8 +30,10 @@ const paymentSchema = new mongoose.Schema(
       enum: ["pending", "completed", "failed", "refunded"],
       default: "pending",
     },
-    transactionId: String, // eSewa transaction ID
+    transactionId: String, // eSewa transaction code
     refId: String, // eSewa reference ID
+    signature: String, // eSewa response signature
+    failureReason: String, // Reason for payment failure
   },
   { timestamps: true },
 );

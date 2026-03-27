@@ -1,0 +1,203 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import {
+  CheckCircle,
+  Package,
+  Home,
+  ShoppingBag,
+  ArrowRight,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Navbar } from "@/components/Navbar";
+import { Footer } from "@/components/Footer";
+
+interface OrderDetails {
+  _id: string;
+  orderItems: Array<{
+    name: string;
+    price: number;
+    quantity: number;
+    image: string;
+  }>;
+  shippingAddress: {
+    fullName: string;
+    address: string;
+    city: string;
+    district: string;
+  };
+  totalPrice: number;
+  paymentMethod: string;
+  paymentStatus: string;
+  orderStatus: string;
+}
+
+export default function PaymentSuccessPage() {
+  const searchParams = useSearchParams();
+  const orderId = searchParams.get("orderId");
+  const [order, setOrder] = useState<OrderDetails | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (orderId) {
+      fetchOrderDetails();
+    }
+  }, [orderId]);
+
+  const fetchOrderDetails = async () => {
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `http://localhost:5000/api/orders/${orderId}`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setOrder(data);
+      }
+    } catch (error) {
+      console.error("Error fetching order:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex flex-col bg-background">
+      <Navbar />
+
+      <main className="flex-1 container mx-auto px-4 py-16">
+        <div className="max-w-2xl mx-auto">
+          {/* Success Header */}
+          <div className="text-center mb-12">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 mb-6">
+              <CheckCircle className="h-10 w-10 text-green-600" />
+            </div>
+            <h1 className="text-3xl font-bold mb-2">
+              Order Placed Successfully!
+            </h1>
+            <p className="text-muted-foreground">
+              Thank you for your order. We&apos;ll send you a confirmation email
+              shortly.
+            </p>
+            {orderId && (
+              <p className="text-sm text-muted-foreground mt-2">
+                Order ID: <span className="font-medium">{orderId}</span>
+              </p>
+            )}
+          </div>
+
+          {/* Order Details Card */}
+          {!isLoading && order && (
+            <Card className="mb-8">
+              <CardContent className="pt-6 space-y-6">
+                {/* Order Status */}
+                <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
+                  <Package className="h-5 w-5 text-green-600" />
+                  <div>
+                    <p className="font-medium text-green-800">
+                      {order.paymentMethod === "cod"
+                        ? "Cash on Delivery - Order Pending"
+                        : "Payment Received - Order Confirmed"}
+                    </p>
+                    <p className="text-sm text-green-600">
+                      Order Status:{" "}
+                      {order.orderStatus.charAt(0).toUpperCase() +
+                        order.orderStatus.slice(1)}
+                    </p>
+                  </div>
+                </div>
+
+                {/* Shipping Address */}
+                <div>
+                  <h3 className="font-semibold mb-2">Shipping Address</h3>
+                  <p className="text-muted-foreground">
+                    {order.shippingAddress.fullName}
+                    <br />
+                    {order.shippingAddress.address}
+                    <br />
+                    {order.shippingAddress.city},{" "}
+                    {order.shippingAddress.district}
+                  </p>
+                </div>
+
+                {/* Order Items */}
+                <div>
+                  <h3 className="font-semibold mb-3">Order Items</h3>
+                  <div className="space-y-3">
+                    {order.orderItems.map((item, index) => (
+                      <div key={index} className="flex items-center gap-4">
+                        <div className="w-16 h-16 rounded-md bg-muted overflow-hidden flex-shrink-0">
+                          {item.image && (
+                            <img
+                              src={item.image}
+                              alt={item.name}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <p className="font-medium">{item.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            Rs. {item.price.toLocaleString()} × {item.quantity}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-medium">
+                            Rs. {(item.price * item.quantity).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Total */}
+                <div className="border-t pt-4">
+                  <div className="flex justify-between text-lg font-semibold">
+                    <span>Total Paid</span>
+                    <span>Rs. {order.totalPrice.toLocaleString()}</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Loading State */}
+          {isLoading && (
+            <div className="text-center py-8">
+              <p className="text-muted-foreground">Loading order details...</p>
+            </div>
+          )}
+
+          {/* Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/">
+              <Button variant="outline" size="lg" className="w-full sm:w-auto">
+                <Home className="mr-2 h-4 w-4" />
+                Continue Shopping
+              </Button>
+            </Link>
+            <Link href="/orders">
+              <Button size="lg" className="w-full sm:w-auto">
+                <ShoppingBag className="mr-2 h-4 w-4" />
+                View My Orders
+                <ArrowRight className="ml-2 h-4 w-4" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </main>
+
+      <Footer />
+    </div>
+  );
+}

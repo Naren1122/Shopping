@@ -78,8 +78,12 @@ export default function CheckoutAddressPage() {
     // Store selected address and buyNow item (if any) in localStorage for the payment page
     if (typeof window !== "undefined") {
       localStorage.setItem("selectedAddress", JSON.stringify(selectedAddress));
+
+      // Store order items - if buyNowItem exists use it, otherwise use cart items
       if (buyNowItem) {
-        localStorage.setItem("buyNowItem", JSON.stringify(buyNowItem));
+        localStorage.setItem("checkoutItems", JSON.stringify([buyNowItem]));
+      } else if (items.length > 0) {
+        localStorage.setItem("checkoutItems", JSON.stringify(items));
       }
     }
 
