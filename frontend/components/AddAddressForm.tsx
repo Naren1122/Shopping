@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Plus, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +14,7 @@ import {
   Address,
   AddressFormData,
 } from "@/lib/features/addresses/addressesSlice";
+import { LocationMapPicker } from "@/components/LocationMapPicker";
 
 interface AddAddressFormProps {
   address?: Address | null;
@@ -145,7 +145,6 @@ export function AddAddressForm({
   onCancel,
 }: AddAddressFormProps) {
   const dispatch = useAppDispatch();
-  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState<AddressFormData>({
     address: address?.address || "",
@@ -155,6 +154,24 @@ export function AddAddressForm({
     ward: address?.ward || "",
     phone: address?.phone || "",
     isDefault: address?.isDefault || false,
+    latitude: address?.latitude,
+    longitude: address?.longitude,
+    locationAddress: address?.locationAddress || "",
+  });
+
+  const [locationCoords, setLocationCoords] = useState<{
+    lat: number;
+    lng: number;
+    address: string;
+  } | null>(() => {
+    if (address?.latitude && address?.longitude) {
+      return {
+        lat: address.latitude,
+        lng: address.longitude,
+        address: address.locationAddress || "",
+      };
+    }
+    return null;
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -355,6 +372,30 @@ export function AddAddressForm({
             {errors.phone && (
               <p className="text-sm text-destructive">{errors.phone}</p>
             )}
+          </div>
+
+          {/* Location Map Picker */}
+          <div className="space-y-2">
+            <LocationMapPicker
+              initialCoordinates={
+                locationCoords
+                  ? { lat: locationCoords.lat, lng: locationCoords.lng }
+                  : undefined
+              }
+              onLocationSelect={(location) => {
+                setLocationCoords({
+                  lat: location.lat,
+                  lng: location.lng,
+                  address: location.address,
+                });
+                setFormData((prev) => ({
+                  ...prev,
+                  latitude: location.lat,
+                  longitude: location.lng,
+                  locationAddress: location.address,
+                }));
+              }}
+            />
           </div>
 
           {/* Default Address Checkbox */}

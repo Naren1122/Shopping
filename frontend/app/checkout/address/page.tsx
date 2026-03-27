@@ -30,30 +30,27 @@ export default function CheckoutAddressPage() {
   const { isAuthenticated } = useAppSelector((state) => state.auth);
   const { items } = useAppSelector((state) => state.cart);
 
-  // Buy Now item state - only read on client
-  const [buyNowItem, setBuyNowItem] = useState<{
+  // Buy Now item state - only read on client using lazy initialization
+  const [buyNowItem] = useState<{
     _id: string;
     name: string;
     price: number;
     image: string;
     quantity: number;
-  } | null>(null);
-  const [isHydrated, setIsHydrated] = useState(false);
-
-  // Read from sessionStorage after hydration
-  useEffect(() => {
-    setIsHydrated(true);
-
+  } | null>(() => {
+    // Lazily initialize from sessionStorage only on client
+    if (typeof window === "undefined") return null;
     const itemStr = sessionStorage.getItem("buyNowItem");
     if (itemStr) {
       sessionStorage.removeItem("buyNowItem");
       try {
-        setBuyNowItem(JSON.parse(itemStr));
+        return JSON.parse(itemStr);
       } catch (e) {
         console.error("Failed to parse buyNowItem:", e);
       }
     }
-  }, []);
+    return null;
+  });
 
   // If buyNowItem exists, show it in order summary; otherwise show cart items
   // Use useMemo to keep stable reference

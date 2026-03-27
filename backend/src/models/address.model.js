@@ -7,7 +7,7 @@ const addressSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-   
+
     address: {
       type: String,
       required: true,
@@ -24,9 +24,9 @@ const addressSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
-    ward:{
-        type: String,
-         required: true,
+    ward: {
+      type: String,
+      required: true,
     },
     phone: {
       type: String,
@@ -35,6 +35,15 @@ const addressSchema = new mongoose.Schema(
     isDefault: {
       type: Boolean,
       default: false,
+    },
+    latitude: {
+      type: Number,
+    },
+    longitude: {
+      type: Number,
+    },
+    locationAddress: {
+      type: String,
     },
   },
   { timestamps: true },

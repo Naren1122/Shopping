@@ -11,6 +11,9 @@ export interface Address {
   ward: string;
   phone: string;
   isDefault: boolean;
+  latitude?: number;
+  longitude?: number;
+  locationAddress?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -30,6 +33,9 @@ interface AddressFormData {
   ward: string;
   phone: string;
   isDefault?: boolean;
+  latitude?: number;
+  longitude?: number;
+  locationAddress?: string;
 }
 
 export type { AddressFormData };
