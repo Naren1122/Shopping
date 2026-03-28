@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -16,8 +16,39 @@ import {
   LayoutDashboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { logout, initializeAuth } from "@/lib/features/auth/authSlice";
+
+interface AnalyticsOverview {
+  totalUsers: number;
+  totalOrders: number;
+  totalProducts: number;
+  totalRevenue: number;
+  todayOrders: number;
+  todayRevenue: number;
+}
+
+interface OrderItem {
+  _id: string;
+  name: string;
+  quantity: number;
+  price: number;
+  image?: string;
+}
+
+interface RecentOrder {
+  _id: string;
+  orderItems: OrderItem[];
+  totalPrice: number;
+  orderStatus: string;
+  paymentStatus: string;
+  createdAt: string;
+  user: {
+    name: string;
+    email: string;
+  };
+}
 
 export default function AdminDashboardPage() {
   const router = useRouter();
@@ -25,6 +56,12 @@ export default function AdminDashboardPage() {
   const { user, isAuthenticated, isLoading } = useAppSelector(
     (state) => state.auth,
   );
+
+  const [analytics, setAnalytics] = useState<AnalyticsOverview | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
+  const [analyticsError, setAnalyticsError] = useState<string | null>(null);
+  const [recentOrders, setRecentOrders] = useState<RecentOrder[]>([]);
+  const [recentOrdersLoading, setRecentOrdersLoading] = useState(true);
 
   useEffect(() => {
     // Helper function to check and handle auth
@@ -70,6 +107,107 @@ export default function AdminDashboardPage() {
     // Check auth
     checkAuth();
   }, [isLoading, isAuthenticated, user, dispatch, router]);
+
+  // Fetch analytics data
+  const fetchAnalytics = async () => {
+    setAnalyticsLoading(true);
+    setAnalyticsError(null);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/analytics/overview`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        console.error("Analytics fetch error:", response.status);
+        setAnalytics({
+          totalUsers: 0,
+          totalOrders: 0,
+          totalProducts: 0,
+          totalRevenue: 0,
+          todayOrders: 0,
+          todayRevenue: 0,
+        });
+        return;
+      }
+
+      const data = await response.json();
+      setAnalytics(data);
+    } catch (error) {
+      console.error("Error fetching analytics:", error);
+      setAnalyticsError("Failed to load analytics data");
+      setAnalytics({
+        totalUsers: 0,
+        totalOrders: 0,
+        totalProducts: 0,
+        totalRevenue: 0,
+        todayOrders: 0,
+        todayRevenue: 0,
+      });
+    } finally {
+      setAnalyticsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && user?.role === "admin") {
+      fetchAnalytics();
+    }
+  }, [isAuthenticated, user]);
+
+  // Fetch recent orders
+  const fetchRecentOrders = async () => {
+    setRecentOrdersLoading(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/admin/all?limit=5`,
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            "Content-Type": "application/json",
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        console.error(
+          "Fetch orders error:",
+          response.status,
+          response.statusText,
+          errorData,
+        );
+        // For 404, it might be route not found - need to check backend
+        if (response.status === 404) {
+          console.warn(
+            "Route /api/orders/admin/all not found. Make sure backend is restarted with latest code.",
+          );
+        }
+        setRecentOrders([]);
+        return;
+      }
+
+      const data = await response.json();
+      setRecentOrders(data.orders || []);
+    } catch (error) {
+      console.error("Error fetching recent orders:", error);
+      setRecentOrders([]);
+    } finally {
+      setRecentOrdersLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (isAuthenticated && user?.role === "admin") {
+      fetchRecentOrders();
+    }
+  }, [isAuthenticated, user]);
 
   const handleLogout = () => {
     dispatch(logout());
@@ -146,49 +284,87 @@ export default function AdminDashboardPage() {
 
         {/* Admin Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div className="border border-border rounded-xl p-6 bg-card">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
-                <ShoppingBag className="w-6 h-6 text-blue-600" />
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                  <ShoppingBag className="w-6 h-6 text-blue-600" />
+                </div>
               </div>
-              <span className="text-sm text-green-600 font-medium">+12%</span>
-            </div>
-            <h3 className="text-2xl font-bold">1,234</h3>
-            <p className="text-sm text-muted-foreground">Total Products</p>
-          </div>
+              {analyticsLoading ? (
+                <div className="animate-pulse h-8 bg-muted rounded"></div>
+              ) : (
+                <>
+                  <h3 className="text-2xl font-bold">
+                    {analytics?.totalProducts || 0}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">
+                    Total Products
+                  </p>
+                </>
+              )}
+            </CardContent>
+          </Card>
 
-          <div className="border border-border rounded-xl p-6 bg-card">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
-                <Package className="w-6 h-6 text-green-600" />
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-lg bg-green-100 dark:bg-green-900/30 flex items-center justify-center">
+                  <Package className="w-6 h-6 text-green-600" />
+                </div>
               </div>
-              <span className="text-sm text-green-600 font-medium">+8%</span>
-            </div>
-            <h3 className="text-2xl font-bold">567</h3>
-            <p className="text-sm text-muted-foreground">Total Orders</p>
-          </div>
+              {analyticsLoading ? (
+                <div className="animate-pulse h-8 bg-muted rounded"></div>
+              ) : (
+                <>
+                  <h3 className="text-2xl font-bold">
+                    {analytics?.totalOrders || 0}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">Total Orders</p>
+                </>
+              )}
+            </CardContent>
+          </Card>
 
-          <div className="border border-border rounded-xl p-6 bg-card">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
-                <Users className="w-6 h-6 text-purple-600" />
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                  <Users className="w-6 h-6 text-purple-600" />
+                </div>
               </div>
-              <span className="text-sm text-green-600 font-medium">+15%</span>
-            </div>
-            <h3 className="text-2xl font-bold">890</h3>
-            <p className="text-sm text-muted-foreground">Total Users</p>
-          </div>
+              {analyticsLoading ? (
+                <div className="animate-pulse h-8 bg-muted rounded"></div>
+              ) : (
+                <>
+                  <h3 className="text-2xl font-bold">
+                    {analytics?.totalUsers || 0}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">Total Users</p>
+                </>
+              )}
+            </CardContent>
+          </Card>
 
-          <div className="border border-border rounded-xl p-6 bg-card">
-            <div className="flex items-center justify-between mb-4">
-              <div className="w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
-                <BarChart3 className="w-6 h-6 text-amber-600" />
+          <Card>
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                  <BarChart3 className="w-6 h-6 text-amber-600" />
+                </div>
               </div>
-              <span className="text-sm text-green-600 font-medium">+22%</span>
-            </div>
-            <h3 className="text-2xl font-bold">Rs. 1.2M</h3>
-            <p className="text-sm text-muted-foreground">Total Revenue</p>
-          </div>
+              {analyticsLoading ? (
+                <div className="animate-pulse h-8 bg-muted rounded"></div>
+              ) : (
+                <>
+                  <h3 className="text-2xl font-bold">
+                    Rs. {(analytics?.totalRevenue || 0).toLocaleString()}
+                  </h3>
+                  <p className="text-sm text-muted-foreground">Total Revenue</p>
+                </>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {/* Admin Actions Grid */}
@@ -295,6 +471,122 @@ export default function AdminDashboardPage() {
               </p>
             </div>
           </Link>
+        </div>
+
+        {/* Recent Orders Table */}
+        <div className="mt-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold text-foreground">
+              Recent Orders
+            </h2>
+            <Link href="/admin/orders">
+              <Button variant="link">View All</Button>
+            </Link>
+          </div>
+          <Card>
+            <CardContent className="p-0">
+              {recentOrdersLoading ? (
+                <div className="p-6 space-y-4">
+                  {[...Array(5)].map((_, i) => (
+                    <div
+                      key={i}
+                      className="animate-pulse flex items-center gap-4"
+                    >
+                      <div className="h-4 w-4 bg-muted rounded"></div>
+                      <div className="h-4 flex-1 bg-muted rounded"></div>
+                      <div className="h-4 w-20 bg-muted rounded"></div>
+                      <div className="h-4 w-20 bg-muted rounded"></div>
+                    </div>
+                  ))}
+                </div>
+              ) : recentOrders.length > 0 ? (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead>
+                      <tr className="border-b border-border">
+                        <th className="text-left p-4 font-medium text-muted-foreground">
+                          Order ID
+                        </th>
+                        <th className="text-left p-4 font-medium text-muted-foreground">
+                          Customer
+                        </th>
+                        <th className="text-left p-4 font-medium text-muted-foreground">
+                          Items
+                        </th>
+                        <th className="text-left p-4 font-medium text-muted-foreground">
+                          Total
+                        </th>
+                        <th className="text-left p-4 font-medium text-muted-foreground">
+                          Status
+                        </th>
+                        <th className="text-left p-4 font-medium text-muted-foreground">
+                          Date
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {recentOrders.map((order) => (
+                        <tr
+                          key={order._id}
+                          className="border-b border-border hover:bg-muted/50"
+                        >
+                          <td className="p-4">
+                            <span className="font-mono text-sm">
+                              {order._id.slice(-8)}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <div>
+                              <p className="font-medium">
+                                {order.user?.name || "Unknown"}
+                              </p>
+                              <p className="text-sm text-muted-foreground">
+                                {order.user?.email}
+                              </p>
+                            </div>
+                          </td>
+                          <td className="p-4">
+                            <span className="text-sm">
+                              {order.orderItems?.length || 0} item(s)
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <span className="font-medium">
+                              Rs. {order.totalPrice.toLocaleString()}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <span
+                              className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                                order.orderStatus === "delivered"
+                                  ? "bg-green-100 text-green-800"
+                                  : order.orderStatus === "shipped"
+                                    ? "bg-blue-100 text-blue-800"
+                                    : order.orderStatus === "processing"
+                                      ? "bg-yellow-100 text-yellow-800"
+                                      : "bg-gray-100 text-gray-800"
+                              }`}
+                            >
+                              {order.orderStatus || "pending"}
+                            </span>
+                          </td>
+                          <td className="p-4">
+                            <span className="text-sm text-muted-foreground">
+                              {new Date(order.createdAt).toLocaleDateString()}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : (
+                <div className="p-6 text-center text-muted-foreground">
+                  No recent orders found
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

@@ -5,6 +5,8 @@ import cartReducer from "./features/cart/cartSlice";
 import wishlistReducer from "./features/wishlist/wishlistSlice";
 import addressesReducer from "./features/addresses/addressesSlice";
 import ordersReducer from "./features/orders/ordersSlice";
+import recommendationsReducer from "./features/recommendations/recommendationsSlice";
+import chatReducer from "./features/chat/chatSlice";
 
 export const makeStore = () => {
   return configureStore({
@@ -15,6 +17,8 @@ export const makeStore = () => {
       wishlist: wishlistReducer,
       addresses: addressesReducer,
       orders: ordersReducer,
+      recommendations: recommendationsReducer,
+      chat: chatReducer,
     },
   });
 };

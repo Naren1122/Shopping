@@ -19,26 +19,17 @@ export function AddressList({
   onSelectAddress,
 }: AddressListProps) {
   const [isAddingNew, setIsAddingNew] = useState(false);
-  const [editingAddress, setEditingAddress] = useState<Address | null>(null);
 
   const handleAddNew = () => {
     setIsAddingNew(true);
-    setEditingAddress(null);
-  };
-
-  const handleEdit = (address: Address) => {
-    setEditingAddress(address);
-    setIsAddingNew(false);
   };
 
   const handleSuccess = () => {
     setIsAddingNew(false);
-    setEditingAddress(null);
   };
 
   const handleCancel = () => {
     setIsAddingNew(false);
-    setEditingAddress(null);
   };
 
   return (
@@ -46,7 +37,7 @@ export function AddressList({
       {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-semibold">Saved Addresses</h2>
-        {!isAddingNew && !editingAddress && (
+        {!isAddingNew && (
           <Button onClick={handleAddNew}>
             <Plus className="h-4 w-4 mr-2" />
             Add New Address
@@ -55,13 +46,9 @@ export function AddressList({
       </div>
 
       {/* Add/Edit Form */}
-      {(isAddingNew || editingAddress) && (
+      {isAddingNew && (
         <div className="mb-6">
-          <AddAddressForm
-            address={editingAddress}
-            onSuccess={handleSuccess}
-            onCancel={handleCancel}
-          />
+          <AddAddressForm onSuccess={handleSuccess} onCancel={handleCancel} />
         </div>
       )}
 
@@ -84,7 +71,6 @@ export function AddressList({
               key={address._id}
               address={address}
               isSelected={selectedAddress?._id === address._id}
-              onEdit={handleEdit}
             />
           ))}
         </div>

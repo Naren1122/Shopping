@@ -28,6 +28,9 @@ interface SignupCredentials {
   adminSecretKey?: string;
 }
 
+// API base URL for backend
+const API_URL = "http://localhost:5000/api/auth";
+
 // Initial state
 const initialState: AuthState = {
   user: null,
@@ -97,11 +100,25 @@ export const signup = createAsyncThunk(
 );
 
 export const logout = createAsyncThunk("auth/logout", async () => {
+  try {
+    // Call backend logout endpoint to clear cookies
+    await fetch("http://localhost:5000/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch (error) {
+    // Continue with local cleanup even if backend call fails
+    console.error("Backend logout failed:", error);
+  }
+
   // Clear local storage and cookies
   if (typeof window !== "undefined") {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
-    document.cookie = "token=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie =
+      "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+    document.cookie =
+      "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
   }
   return null;
 });

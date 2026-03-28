@@ -292,6 +292,11 @@ export function Navbar() {
                           Wishlist
                         </Link>
                       </DropdownMenuItem>
+                      <DropdownMenuItem>
+                        <Link href="/recommendations" className="w-full">
+                          Recommendations
+                        </Link>
+                      </DropdownMenuItem>
                     </>
                   )}
                   <DropdownMenuItem>

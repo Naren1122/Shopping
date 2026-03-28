@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MapPin, Phone, Trash2, Star, Edit, CheckCircle } from "lucide-react";
+import { MapPin, Phone, Trash2, Star, CheckCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import {
@@ -24,10 +24,9 @@ import {
 interface AddressCardProps {
   address: Address;
   isSelected: boolean;
-  onEdit: (address: Address) => void;
 }
 
-export function AddressCard({ address, isSelected, onEdit }: AddressCardProps) {
+export function AddressCard({ address, isSelected }: AddressCardProps) {
   const dispatch = useAppDispatch();
   const [isDeleting, setIsDeleting] = useState(false);
   const [isSettingDefault, setIsSettingDefault] = useState(false);
@@ -124,18 +123,6 @@ export function AddressCard({ address, isSelected, onEdit }: AddressCardProps) {
 
             {/* Action buttons */}
             <div className="flex items-center gap-2 mt-4">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onEdit(address);
-                }}
-              >
-                <Edit className="h-4 w-4 mr-1" />
-                Edit
-              </Button>
-
               {!address.isDefault && (
                 <Button
                   variant="outline"

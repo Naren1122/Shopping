@@ -49,6 +49,22 @@ export default function ProductDetailPage() {
   useEffect(() => {
     if (productId) {
       dispatch(fetchProductById(productId));
+
+      // Track browsing history if user is authenticated
+      const token = localStorage.getItem("token");
+      if (token) {
+        fetch("http://localhost:5000/api/auth/track-view", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ productId }),
+          credentials: "include",
+        }).catch(() => {
+          // Silently fail - tracking is non-critical
+        });
+      }
     }
   }, [dispatch, productId]);
 

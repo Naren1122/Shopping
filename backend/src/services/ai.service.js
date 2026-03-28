@@ -1,7 +1,13 @@
 import Product from "../models/product.model.js";
 
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY}`;
+// Using v1 API with gemini-1.5-flash model
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key=${GEMINI_API_KEY || ""}`;
+
+// Check if API key is configured
+const isAIConfigured = () => {
+  return GEMINI_API_KEY && GEMINI_API_KEY.length > 0;
+};
 
 /**
  * Get AI-powered product recommendations
@@ -10,6 +16,20 @@ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemi
  */
 export const getRecommendations = async (userContext) => {
   try {
+    // Check if AI is configured
+    if (!isAIConfigured()) {
+      // Return fallback products without AI
+      const products = await Product.find({}).lean();
+      return products
+        .sort(() => 0.5 - Math.random())
+        .slice(0, 5)
+        .map((p) => ({
+          productId: p._id,
+          reason: "Popular product",
+          product: p,
+        }));
+    }
+
     // Get all products from database
     const products = await Product.find({}).lean();
 
@@ -32,9 +52,11 @@ You are a product recommendation system for an e-commerce store.
 Based on the user's context, recommend the most relevant products.
 
 User Context:
-- Browsing history: ${userContext.browsingHistory?.join(", ") || "None"}
-- Previous purchases: ${userContext.purchases?.join(", ") || "None"}
+- Browsing history (products viewed): ${userContext.browsingHistory?.join(", ") || "None"}
+- Browsing categories (categories user viewed): ${userContext.browsingCategories?.join(", ") || "None"}
+- Purchased categories (categories user bought before): ${userContext.purchases?.join(", ") || "None"}
 - Wishlist items: ${userContext.wishlist?.join(", ") || "None"}
+- Cart items: ${userContext.cartItems?.join(", ") || "None"}
 
 Available Products:
 ${productList}

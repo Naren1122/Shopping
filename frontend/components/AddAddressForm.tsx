@@ -66,7 +66,7 @@ const districts: Record<string, string[]> = {
     "Dhulikhel",
     "Hetauda",
     "Kavrepalanchok",
-    "Krishna",
+    "Kathmandu",
     "Lalitpur",
     "Makwanpur",
     "Nuwakot",

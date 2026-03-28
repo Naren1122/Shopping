@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { User, Mail, Save, ArrowLeft } from "lucide-react";
+import { User, Mail, Save, ArrowLeft, Lock, Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import {
   logout,
@@ -23,6 +31,8 @@ import {
 } from "@/lib/features/auth/authSlice";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -36,6 +46,18 @@ export default function ProfilePage() {
     email: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Change password state
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
+  const [passwordData, setPasswordData] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   useEffect(() => {
     // Check auth
@@ -96,6 +118,113 @@ export default function ProfilePage() {
       icon: "✓",
     });
     router.push("/");
+  };
+
+  // Handle password change
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    // Frontend validation
+    if (!passwordData.currentPassword) {
+      toast.error("Current password is required", {
+        icon: "✕",
+      });
+      return;
+    }
+
+    if (!passwordData.newPassword) {
+      toast.error("New password is required", {
+        icon: "✕",
+      });
+      return;
+    }
+
+    if (!passwordData.confirmPassword) {
+      toast.error("Confirm password is required", {
+        icon: "✕",
+      });
+      return;
+    }
+
+    if (passwordData.newPassword.length < 6) {
+      toast.error("New password must be at least 6 characters", {
+        icon: "✕",
+      });
+      return;
+    }
+
+    if (passwordData.currentPassword === passwordData.newPassword) {
+      toast.error("New password must be different from current password", {
+        icon: "✕",
+      });
+      return;
+    }
+
+    if (passwordData.newPassword !== passwordData.confirmPassword) {
+      toast.error("New password and confirm password do not match", {
+        icon: "✕",
+      });
+      return;
+    }
+
+    setIsChangingPassword(true);
+
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(`${API_URL}/auth/change-password`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          currentPassword: passwordData.currentPassword,
+          newPassword: passwordData.newPassword,
+          confirmPassword: passwordData.confirmPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // Handle specific error messages from backend
+        if (data.message === "Current password is incorrect") {
+          throw new Error("Current password does not match");
+        }
+        if (data.message === "New password and confirm password do not match") {
+          throw new Error("New password and confirm password do not match");
+        }
+        throw new Error(data.message || "Failed to change password");
+      }
+
+      toast.success("Password changed successfully!", {
+        description: "Your password has been updated.",
+        icon: "✓",
+      });
+
+      setPasswordDialogOpen(false);
+      setPasswordData({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : "Please try again.";
+      toast.error("Failed to change password", {
+        description: errorMessage,
+        icon: "✕",
+      });
+    } finally {
+      setIsChangingPassword(false);
+    }
+  };
+
+  const handlePasswordInputChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) => {
+    const { name, value } = e.target;
+    setPasswordData((prev) => ({ ...prev, [name]: value }));
   };
 
   // Show loading while checking auth
@@ -209,6 +338,141 @@ export default function ProfilePage() {
                   >
                     Logout
                   </Button>
+                </div>
+
+                {/* Change Password Button */}
+                <div className="pt-4 border-t">
+                  <Dialog
+                    open={passwordDialogOpen}
+                    onOpenChange={setPasswordDialogOpen}
+                  >
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full">
+                        <Lock className="mr-2 h-4 w-4" />
+                        Change Password
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Change Password</DialogTitle>
+                        <DialogDescription>
+                          Enter your current password and choose a new password.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form
+                        onSubmit={handlePasswordChange}
+                        className="space-y-4"
+                      >
+                        {/* Current Password */}
+                        <div className="space-y-2">
+                          <Label htmlFor="currentPassword">
+                            Current Password
+                          </Label>
+                          <div className="relative">
+                            <Input
+                              id="currentPassword"
+                              name="currentPassword"
+                              type={showCurrentPassword ? "text" : "password"}
+                              placeholder="Enter current password"
+                              value={passwordData.currentPassword}
+                              onChange={handlePasswordInputChange}
+                              required
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowCurrentPassword(!showCurrentPassword)
+                              }
+                              className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                            >
+                              {showCurrentPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* New Password */}
+                        <div className="space-y-2">
+                          <Label htmlFor="newPassword">New Password</Label>
+                          <div className="relative">
+                            <Input
+                              id="newPassword"
+                              name="newPassword"
+                              type={showNewPassword ? "text" : "password"}
+                              placeholder="Enter new password"
+                              value={passwordData.newPassword}
+                              onChange={handlePasswordInputChange}
+                              required
+                              minLength={6}
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowNewPassword(!showNewPassword)
+                              }
+                              className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                            >
+                              {showNewPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Confirm Password */}
+                        <div className="space-y-2">
+                          <Label htmlFor="confirmPassword">
+                            Confirm New Password
+                          </Label>
+                          <div className="relative">
+                            <Input
+                              id="confirmPassword"
+                              name="confirmPassword"
+                              type={showConfirmPassword ? "text" : "password"}
+                              placeholder="Confirm new password"
+                              value={passwordData.confirmPassword}
+                              onChange={handlePasswordInputChange}
+                              required
+                              minLength={6}
+                            />
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setShowConfirmPassword(!showConfirmPassword)
+                              }
+                              className="absolute right-3 top-3 text-muted-foreground hover:text-foreground"
+                            >
+                              {showConfirmPassword ? (
+                                <EyeOff className="h-4 w-4" />
+                              ) : (
+                                <Eye className="h-4 w-4" />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+
+                        <Button
+                          type="submit"
+                          className="w-full"
+                          disabled={isChangingPassword}
+                        >
+                          {isChangingPassword ? (
+                            <span className="flex items-center gap-2">
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                              Changing...
+                            </span>
+                          ) : (
+                            "Change Password"
+                          )}
+                        </Button>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </form>
             </CardContent>

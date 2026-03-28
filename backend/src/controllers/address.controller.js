@@ -5,9 +5,11 @@ import Address from "../models/address.model.js";
 // @access  Private
 export const getAddresses = async (req, res) => {
   try {
-    const addresses = await Address.find({ user: req.user._id }).populate("user","name").sort({
-      createdAt: -1,
-    });
+    const addresses = await Address.find({ user: req.user._id })
+      .populate("user", "name")
+      .sort({
+        createdAt: -1,
+      });
     res.json(addresses);
   } catch (error) {
     res.status(500).json({ message: error.message });
@@ -19,8 +21,18 @@ export const getAddresses = async (req, res) => {
 // @access  Private
 export const addAddress = async (req, res) => {
   try {
-    const {  address, city, district, province, ward,phone, isDefault } =
-      req.body;
+    const {
+      address,
+      city,
+      district,
+      province,
+      ward,
+      phone,
+      isDefault,
+      latitude,
+      longitude,
+      locationAddress,
+    } = req.body;
 
     // If this is set as default, unset all other defaults
     if (isDefault) {
@@ -32,7 +44,7 @@ export const addAddress = async (req, res) => {
 
     const newAddress = await Address.create({
       user: req.user._id,
-     
+
       address,
       city,
       district,
@@ -40,6 +52,9 @@ export const addAddress = async (req, res) => {
       ward,
       phone,
       isDefault: isDefault || false,
+      latitude,
+      longitude,
+      locationAddress,
     });
 
     res.status(201).json(newAddress);
@@ -53,8 +68,18 @@ export const addAddress = async (req, res) => {
 // @access  Private
 export const updateAddress = async (req, res) => {
   try {
-    const { ward, address, city, district, province, phone, isDefault } =
-      req.body;
+    const {
+      ward,
+      address,
+      city,
+      district,
+      province,
+      phone,
+      isDefault,
+      latitude,
+      longitude,
+      locationAddress,
+    } = req.body;
 
     const existingAddress = await Address.findById(req.params.id);
 
@@ -78,14 +103,17 @@ export const updateAddress = async (req, res) => {
     const updatedAddress = await Address.findByIdAndUpdate(
       req.params.id,
       {
-        fullName,
         address,
         city,
         district,
         province,
         ward,
         phone,
-        isDefault: isDefault || existingAddress.isDefault,
+        latitude,
+        longitude,
+        locationAddress,
+        isDefault:
+          isDefault !== undefined ? isDefault : existingAddress.isDefault,
       },
       { new: true },
     );

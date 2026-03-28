@@ -23,6 +23,9 @@ import {
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { signup, clearError } from "@/lib/features/auth/authSlice";
 
+// API URL for backend
+const API_URL = "http://localhost:5000/api/auth";
+
 // Zod schema for signup
 const signupSchema = z
   .object({
@@ -114,6 +117,39 @@ export default function SignupPage() {
       }
     }
   }, [isAuth, authUser, router]);
+
+  // Check authentication on page mount - redirect if already logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const token = localStorage.getItem("token");
+        const response = await fetch(`${API_URL}/check-auth`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
+          credentials: "include",
+        });
+
+        // Skip redirect if response is not OK or not JSON
+        if (
+          !response.ok ||
+          response.headers.get("content-type")?.indexOf("application/json") ===
+            -1
+        ) {
+          return;
+        }
+
+        const data = await response.json();
+
+        if (data.isAuthenticated && data.redirectTo) {
+          router.replace(data.redirectTo);
+        }
+      } catch (error) {
+        // Silently fail - user stays on signup page
+        console.error("Auth check failed:", error);
+      }
+    };
+
+    checkAuth();
+  }, [router]);
 
   // Check for successful signup and redirect
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);

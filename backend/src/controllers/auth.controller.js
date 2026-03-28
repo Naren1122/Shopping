@@ -187,6 +187,48 @@ export const updateProfile = async (req, res) => {
   }
 };
 
+// @desc    Track product view (browsing history)
+// @route   POST /api/auth/track-view
+// @access  Private
+export const trackBrowsingHistory = async (req, res) => {
+  try {
+    const { productId } = req.body;
+
+    if (!productId) {
+      return res.status(400).json({ message: "Product ID is required" });
+    }
+
+    const user = await User.findById(req.user._id);
+
+    // Check if product already in history (don't add duplicates)
+    const existingIndex = user.browsingHistory.findIndex(
+      (h) => h.product.toString() === productId,
+    );
+
+    if (existingIndex !== -1) {
+      // Update the viewedAt timestamp
+      user.browsingHistory[existingIndex].viewedAt = new Date();
+    } else {
+      // Add to beginning of array (most recent first)
+      user.browsingHistory.unshift({
+        product: productId,
+        viewedAt: new Date(),
+      });
+    }
+
+    // Keep only last 20 products
+    if (user.browsingHistory.length > 20) {
+      user.browsingHistory = user.browsingHistory.slice(0, 20);
+    }
+
+    await user.save();
+
+    res.json({ message: "Browsing history updated" });
+  } catch (error) {
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
 // ============== FORGOT PASSWORD ==============
 
 export const forgotPassword = async (req, res) => {
@@ -296,5 +338,123 @@ export const resetPassword = async (req, res) => {
   } catch (error) {
     console.error("Error in resetPassword controller:", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// ============== CHANGE PASSWORD (when logged in) ==============
+
+export const changePassword = async (req, res) => {
+  try {
+    const { currentPassword, newPassword, confirmPassword } = req.body;
+
+    // Validate required fields
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return res.status(400).json({
+        message:
+          "Please provide current password, new password, and confirmation",
+      });
+    }
+
+    // Check if passwords match
+    if (newPassword !== confirmPassword) {
+      return res.status(400).json({
+        message: "New password and confirm password do not match",
+      });
+    }
+
+    // Check if new password is different from current password
+    const isSameAsCurrent = await user.comparePassword(newPassword);
+    if (isSameAsCurrent) {
+      return res.status(400).json({
+        message: "New password must be different from current password",
+      });
+    }
+
+    // Validate password length
+    if (newPassword.length < 6) {
+      return res.status(400).json({
+        message: "Password must be at least 6 characters long",
+      });
+    }
+
+    // Get user from database
+    const user = await User.findById(req.user._id);
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Verify current password
+    const isMatch = await user.comparePassword(currentPassword);
+
+    if (!isMatch) {
+      return res.status(400).json({
+        message: "Current password does not match",
+      });
+    }
+
+    // Update password (pre-save hook will hash it)
+    user.password = newPassword;
+    await user.save();
+
+    res.status(200).json({
+      message: "Password changed successfully",
+    });
+  } catch (error) {
+    console.error("Error in changePassword controller:", error.message);
+    res.status(500).json({ message: "Server error", error: error.message });
+  }
+};
+
+// ============== CHECK AUTH (for redirecting logged-in users) ==============
+
+export const checkAuth = async (req, res) => {
+  try {
+    // Try to get token from cookie first, then from Authorization header
+    let accessToken = req.cookies.accessToken;
+
+    // If no cookie token, check Authorization header
+    if (!accessToken) {
+      const authHeader = req.headers.authorization;
+      if (authHeader && authHeader.startsWith("Bearer ")) {
+        accessToken = authHeader.split(" ")[1];
+      }
+    }
+
+    if (!accessToken) {
+      // User is not authenticated
+      return res.status(200).json({ isAuthenticated: false });
+    }
+
+    try {
+      const decoded = jwt.verify(accessToken, process.env.ACCESS_TOKEN_SECRET);
+      const user = await User.findById(decoded.userId).select("-password");
+
+      if (!user) {
+        return res.status(200).json({ isAuthenticated: false });
+      }
+
+      // User is authenticated - return user info and redirect flag
+      return res.status(200).json({
+        isAuthenticated: true,
+        redirectTo: "/dashboard",
+        user: {
+          _id: user._id,
+          name: user.name,
+          email: user.email,
+          role: user.role,
+        },
+      });
+    } catch (error) {
+      if (error.name === "TokenExpiredError") {
+        // Token expired - treat as not authenticated
+        return res.status(200).json({ isAuthenticated: false });
+      }
+      // Invalid token - treat as not authenticated
+      return res.status(200).json({ isAuthenticated: false });
+    }
+  } catch (error) {
+    console.error("Error in checkAuth controller:", error.message);
+    return res.status(200).json({ isAuthenticated: false });
   }
 };

@@ -16,6 +16,7 @@ import {
   XCircle,
   Truck,
   ShoppingBag,
+  Trash2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -26,6 +27,16 @@ import { initializeAuth } from "@/lib/features/auth/authSlice";
 import { fetchOrderById } from "@/lib/features/orders/ordersSlice";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 export default function OrderDetailPage() {
   const params = useParams();
@@ -41,6 +52,15 @@ export default function OrderDetailPage() {
     isLoading: orderLoading,
     error,
   } = useAppSelector((state) => state.orders);
+
+  // Cancel dialog state
+  const [cancelDialogOpen, setCancelDialogOpen] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+
+  // Delete dialog state
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   useEffect(() => {
     // Check auth
@@ -73,6 +93,79 @@ export default function OrderDetailPage() {
       toast.error(error);
     }
   }, [error]);
+
+  // Handle cancel order
+  const handleCancelOrder = async () => {
+    if (!order) return;
+
+    setCancelling(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/${order._id}/cancel`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({ reason: cancelReason }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to cancel order");
+      }
+
+      toast.success("Order cancelled successfully");
+      setCancelDialogOpen(false);
+      setCancelReason("");
+      // Refresh order details
+      dispatch(fetchOrderById(order._id));
+    } catch (err: unknown) {
+      console.error("Error cancelling order:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Failed to cancel order",
+      );
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  // Handle delete order
+  const handleDeleteOrder = async () => {
+    if (!order) return;
+
+    setDeleting(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/${order._id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to delete order");
+      }
+
+      toast.success("Order deleted successfully");
+      router.push("/orders");
+    } catch (err: unknown) {
+      console.error("Error deleting order:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Failed to delete order",
+      );
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
@@ -413,12 +506,133 @@ export default function OrderDetailPage() {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Cancel Order Button - Only show for pending/processing orders */}
+              {(order.orderStatus === "pending" ||
+                order.orderStatus === "processing") && (
+                <Card className="mt-4 border-yellow-200 bg-yellow-50 dark:bg-yellow-900/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-yellow-800 dark:text-yellow-200">
+                          Need to cancel this order?
+                        </p>
+                        <p className="text-sm text-yellow-600 dark:text-yellow-300">
+                          You can cancel your order before it is shipped.
+                        </p>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        onClick={() => setCancelDialogOpen(true)}
+                      >
+                        Request Cancellation
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Delete Order Button - Only show for cancelled orders */}
+              {order.orderStatus === "cancelled" && (
+                <Card className="mt-4 border-red-200 bg-red-50 dark:bg-red-900/20">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="font-medium text-red-800 dark:text-red-200">
+                          Delete this order?
+                        </p>
+                        <p className="text-sm text-red-600 dark:text-red-300">
+                          Permanently remove this order from your history.
+                        </p>
+                      </div>
+                      <Button
+                        variant="destructive"
+                        onClick={() => setDeleteDialogOpen(true)}
+                      >
+                        Delete Order
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </div>
         </div>
       </main>
 
       <Footer />
+
+      {/* Cancel Order Dialog */}
+      <Dialog open={cancelDialogOpen} onOpenChange={setCancelDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Cancel Order</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to cancel this order? This action cannot be
+              undone.
+              {order?.paymentStatus === "paid" && (
+                <p className="mt-2 text-yellow-600">
+                  This order has been paid. A refund will be initiated.
+                </p>
+              )}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            <label className="text-sm font-medium mb-2 block">
+              Reason for cancellation (optional)
+            </label>
+            <Textarea
+              value={cancelReason}
+              onChange={(e) => setCancelReason(e.target.value)}
+              placeholder="Enter reason for cancellation..."
+              rows={3}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setCancelDialogOpen(false)}
+            >
+              Keep Order
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleCancelOrder}
+              disabled={cancelling}
+            >
+              {cancelling ? "Cancelling..." : "Cancel Order"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Order Dialog */}
+      <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Order</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to permanently delete this order? This
+              action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setDeleteDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={handleDeleteOrder}
+              disabled={deleting}
+            >
+              {deleting ? "Deleting..." : "Delete Order"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

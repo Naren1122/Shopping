@@ -14,11 +14,18 @@ import orderRoutes from "./routes/order.route.js";
 import paymentRoutes from "./routes/payment.route.js";
 import recommendationRoutes from "./routes/recommendation.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
+import chatRoutes from "./routes/chat.route.js";
 
 dotenv.config({ path: "./src/.env" });
 const app = express();
 connectDB();
 const PORT = process.env.PORT || 5001;
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error("Server Error:", err);
+  res.status(500).json({ message: err.message || "Internal Server Error" });
+});
 
 app.use(
   cors({
@@ -41,6 +48,7 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/payments", paymentRoutes);
 app.use("/api/recommendations", recommendationRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/chat", chatRoutes);
 
 app.listen(PORT, () => {
   console.log(`Server is running on port ${PORT}`);
