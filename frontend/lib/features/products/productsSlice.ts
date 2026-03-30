@@ -11,6 +11,9 @@ export interface Product {
   isFeatured: boolean;
   createdAt: string;
   updatedAt: string;
+  // Rating fields (optional - populated from reviews)
+  averageRating?: number;
+  numReviews?: number;
 }
 
 interface ProductsState {

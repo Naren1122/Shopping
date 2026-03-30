@@ -209,7 +209,7 @@ export function ChatFloatingButton() {
   return (
     <button
       onClick={() => dispatch(toggleChat())}
-      className="fixed bottom-4 right-4 z-40 bg-green-600 hover:bg-green-700 text-white rounded-full p-4 shadow-lg transition-transform hover:scale-110"
+      className="fixed bottom-4 right-4 z-40 bg-green-600 hover:bg-green-700 text-white rounded-full p-4 shadow-lg transition-all duration-300 hover:scale-110 hover:shadow-xl"
       aria-label="Open chat"
     >
       {isOpen ? (

@@ -1,4 +1,5 @@
 import Product from "../models/product.model.js";
+import Review from "../models/review.model.js";
 import cloudinary from "../lib/cloudinary.js";
 import { redis } from "../lib/redis.js";
 
@@ -11,8 +12,39 @@ export const getAllProducts = async (req, res) => {
     const products = await Product.find({}).skip(skip).limit(limit).lean();
     const total = await Product.countDocuments({});
 
+    // Get review stats for each product
+    const productIds = products.map((p) => p._id);
+    const reviewStats = await Review.aggregate([
+      { $match: { product: { $in: productIds } } },
+      {
+        $group: {
+          _id: "$product",
+          averageRating: { $avg: "$rating" },
+          numReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Create a map for quick lookup
+    const reviewMap = new Map(
+      reviewStats.map((r) => [
+        r._id.toString(),
+        {
+          averageRating: Math.round(r.averageRating * 10) / 10,
+          numReviews: r.numReviews,
+        },
+      ]),
+    );
+
+    // Add rating info to each product
+    const productsWithRatings = products.map((product) => ({
+      ...product,
+      averageRating: reviewMap.get(product._id.toString())?.averageRating || 0,
+      numReviews: reviewMap.get(product._id.toString())?.numReviews || 0,
+    }));
+
     res.json({
-      products,
+      products: productsWithRatings,
       page,
       pages: Math.ceil(total / limit),
       total,
@@ -29,14 +61,14 @@ export const getFeaturedProducts = async (req, res) => {
     // Build query: filter by isFeatured and optionally by category
     const query = { isFeatured: true };
     if (category && category !== "all") {
-      query.category = { $regex: new RegExp(`^${category}$`, "i") };
+      query.category = new RegExp("^" + category + "$", "i");
     }
 
     // Try to get from Redis cache
     try {
       const cacheKey =
         category && category !== "all"
-          ? `featured_products_${category}`
+          ? "featured_products_" + category
           : "featured_products";
       const cached = await redis.get(cacheKey);
       if (cached) {
@@ -56,18 +88,49 @@ export const getFeaturedProducts = async (req, res) => {
       return res.status(404).json({ message: "No featured products found" });
     }
 
+    // Get review stats for each product
+    const productIds = featuredProducts.map((p) => p._id);
+    const reviewStats = await Review.aggregate([
+      { $match: { product: { $in: productIds } } },
+      {
+        $group: {
+          _id: "$product",
+          averageRating: { $avg: "$rating" },
+          numReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Create a map for quick lookup
+    const reviewMap = new Map(
+      reviewStats.map((r) => [
+        r._id.toString(),
+        {
+          averageRating: Math.round(r.averageRating * 10) / 10,
+          numReviews: r.numReviews,
+        },
+      ]),
+    );
+
+    // Add rating info to each product
+    const productsWithRatings = featuredProducts.map((product) => ({
+      ...product,
+      averageRating: reviewMap.get(product._id.toString())?.averageRating || 0,
+      numReviews: reviewMap.get(product._id.toString())?.numReviews || 0,
+    }));
+
     // Try to store in redis for future quick access
     try {
       const cacheKey =
         category && category !== "all"
-          ? `featured_products_${category}`
+          ? "featured_products_" + category
           : "featured_products";
-      await redis.set(cacheKey, JSON.stringify(featuredProducts));
+      await redis.set(cacheKey, JSON.stringify(productsWithRatings));
     } catch (redisError) {
       console.log("Redis set error:", redisError.message);
     }
 
-    res.json(featuredProducts);
+    res.json(productsWithRatings);
   } catch (error) {
     console.log("Error in getFeaturedProducts controller", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -114,7 +177,7 @@ export const deleteProduct = async (req, res) => {
     if (product.image) {
       const publicId = product.image.split("/").pop().split(".")[0];
       try {
-        await cloudinary.uploader.destroy(`products/${publicId}`);
+        await cloudinary.uploader.destroy("products/" + publicId);
       } catch (error) {
         console.log("error deleting image from cloudinary", error);
       }
@@ -137,18 +200,49 @@ export const getProductsByCategory = async (req, res) => {
 
     // Use case-insensitive regex for category matching
     const products = await Product.find({
-      category: { $regex: new RegExp(`^${category}$`, "i") },
+      category: new RegExp("^" + category + "$", "i"),
     })
       .skip(skip)
       .limit(limit)
       .lean();
 
     const total = await Product.countDocuments({
-      category: { $regex: new RegExp(`^${category}$`, "i") },
+      category: new RegExp("^" + category + "$", "i"),
     });
 
+    // Get review stats for each product
+    const productIds = products.map((p) => p._id);
+    const reviewStats = await Review.aggregate([
+      { $match: { product: { $in: productIds } } },
+      {
+        $group: {
+          _id: "$product",
+          averageRating: { $avg: "$rating" },
+          numReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Create a map for quick lookup
+    const reviewMap = new Map(
+      reviewStats.map((r) => [
+        r._id.toString(),
+        {
+          averageRating: Math.round(r.averageRating * 10) / 10,
+          numReviews: r.numReviews,
+        },
+      ]),
+    );
+
+    // Add rating info to each product
+    const productsWithRatings = products.map((product) => ({
+      ...product,
+      averageRating: reviewMap.get(product._id.toString())?.averageRating || 0,
+      numReviews: reviewMap.get(product._id.toString())?.numReviews || 0,
+    }));
+
     res.json({
-      products,
+      products: productsWithRatings,
       page,
       pages: Math.ceil(total / limit),
       total,
@@ -193,7 +287,7 @@ export const updateProduct = async (req, res) => {
       if (product.image) {
         const publicId = product.image.split("/").pop().split(".")[0];
         try {
-          await cloudinary.uploader.destroy(`products/${publicId}`);
+          await cloudinary.uploader.destroy("products/" + publicId);
         } catch (error) {
           console.log("error deleting old image", error);
         }
@@ -241,8 +335,39 @@ export const getProductsWithPagination = async (req, res) => {
     const products = await Product.find({}).skip(skip).limit(limit).lean();
     const total = await Product.countDocuments({});
 
+    // Get review stats for each product
+    const productIds = products.map((p) => p._id);
+    const reviewStats = await Review.aggregate([
+      { $match: { product: { $in: productIds } } },
+      {
+        $group: {
+          _id: "$product",
+          averageRating: { $avg: "$rating" },
+          numReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Create a map for quick lookup
+    const reviewMap = new Map(
+      reviewStats.map((r) => [
+        r._id.toString(),
+        {
+          averageRating: Math.round(r.averageRating * 10) / 10,
+          numReviews: r.numReviews,
+        },
+      ]),
+    );
+
+    // Add rating info to each product
+    const productsWithRatings = products.map((product) => ({
+      ...product,
+      averageRating: reviewMap.get(product._id.toString())?.averageRating || 0,
+      numReviews: reviewMap.get(product._id.toString())?.numReviews || 0,
+    }));
+
     res.json({
-      products,
+      products: productsWithRatings,
       page,
       pages: Math.ceil(total / limit),
       total,
@@ -264,7 +389,38 @@ export const searchProducts = async (req, res) => {
       name: { $regex: q, $options: "i" },
     }).lean();
 
-    res.json({ products });
+    // Get review stats for each product
+    const productIds = products.map((p) => p._id);
+    const reviewStats = await Review.aggregate([
+      { $match: { product: { $in: productIds } } },
+      {
+        $group: {
+          _id: "$product",
+          averageRating: { $avg: "$rating" },
+          numReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    // Create a map for quick lookup
+    const reviewMap = new Map(
+      reviewStats.map((r) => [
+        r._id.toString(),
+        {
+          averageRating: Math.round(r.averageRating * 10) / 10,
+          numReviews: r.numReviews,
+        },
+      ]),
+    );
+
+    // Add rating info to each product
+    const productsWithRatings = products.map((product) => ({
+      ...product,
+      averageRating: reviewMap.get(product._id.toString())?.averageRating || 0,
+      numReviews: reviewMap.get(product._id.toString())?.numReviews || 0,
+    }));
+
+    res.json({ products: productsWithRatings });
   } catch (error) {
     console.log("Error in searchProducts", error.message);
     res.status(500).json({ message: "Server error", error: error.message });
@@ -309,7 +465,27 @@ export const getProductById = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    res.json(product);
+    // Get review stats
+    const reviewStats = await Review.aggregate([
+      { $match: { product: product._id } },
+      {
+        $group: {
+          _id: "$product",
+          averageRating: { $avg: "$rating" },
+          numReviews: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const productWithRating = {
+      ...product.toObject(),
+      averageRating: reviewStats[0]
+        ? Math.round(reviewStats[0].averageRating * 10) / 10
+        : 0,
+      numReviews: reviewStats[0] ? reviewStats[0].numReviews : 0,
+    };
+
+    res.json(productWithRating);
   } catch (error) {
     console.log("Error in getProductById controller", error.message);
     res.status(500).json({ message: "Server error", error: error.message });

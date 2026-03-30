@@ -3,10 +3,9 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Search, ShoppingCart, User, Menu, X, ChevronDown } from "lucide-react";
+import { Search, User, Menu, X, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,8 +14,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { useAppSelector, useAppDispatch } from "@/lib/hooks";
 import { searchProducts, Product } from "@/lib/features/products/productsSlice";
-import { CartDrawer } from "@/components/CartDrawer";
-import { AddToCartMiniDrawer } from "@/components/AddToCartMiniDrawer";
 
 const categories = [
   { name: "Electronics", icon: "📱", slug: "Electronics" },
@@ -33,30 +30,11 @@ export function Navbar() {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const { isAuthenticated, user } = useAppSelector((state) => state.auth);
-  const { items: cartItems } = useAppSelector((state) => state.cart);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isCartOpen, setIsCartOpen] = useState(false);
-  const [isQuickCartOpen, setIsQuickCartOpen] = useState(false);
-  const [quickCartProduct, setQuickCartProduct] = useState<{
-    _id: string;
-    name: string;
-    price: number;
-    image: string;
-    quantity: number;
-  } | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [showResults, setShowResults] = useState(false);
-
-  // State for Add to Cart mini-drawer
-  const [isAddToCartDrawerOpen, setIsAddToCartDrawerOpen] = useState(false);
-  const [addToCartProduct, setAddToCartProduct] = useState<{
-    _id: string;
-    name: string;
-    price: number;
-    image: string;
-  } | null>(null);
 
   // Handle scroll effect
   useEffect(() => {
@@ -65,45 +43,6 @@ export function Navbar() {
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
-
-  // Handle cart events
-  useEffect(() => {
-    const handleOpenCart = (e: Event) => {
-      if (e instanceof CustomEvent && e.detail && e.detail._id) {
-        // Quick cart modal event
-        setQuickCartProduct(e.detail);
-        setIsQuickCartOpen(true);
-      } else {
-        // Regular cart drawer
-        setIsCartOpen(true);
-      }
-    };
-
-    window.addEventListener("open-cart-drawer", handleOpenCart);
-    window.addEventListener("open-quick-cart", handleOpenCart);
-
-    // Handle Add to Cart mini-drawer events
-    const handleOpenAddToCartDrawer = (e: Event) => {
-      if (e instanceof CustomEvent && e.detail && e.detail._id) {
-        setAddToCartProduct(e.detail);
-        setIsAddToCartDrawerOpen(true);
-      }
-    };
-
-    window.addEventListener(
-      "open-add-to-cart-drawer",
-      handleOpenAddToCartDrawer,
-    );
-
-    return () => {
-      window.removeEventListener("open-cart-drawer", handleOpenCart);
-      window.removeEventListener("open-quick-cart", handleOpenCart);
-      window.removeEventListener(
-        "open-add-to-cart-drawer",
-        handleOpenAddToCartDrawer,
-      );
-    };
   }, []);
 
   // Handle search
@@ -141,10 +80,13 @@ export function Navbar() {
         <div className="flex items-center justify-between gap-4">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 shrink-0">
-            <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center">
-              <span className="text-xl">🛒</span>
+            <div className="w-20 h-14 rounded-xl overflow-hidden bg-white">
+              <img
+                src="/bazarrr.png"
+                alt="Bazar"
+                className="w-full h-full object-contain"
+              />
             </div>
-            <span className="text-xl font-bold hidden sm:block">Bazar</span>
           </Link>
 
           {/* Search Bar - Desktop */}
@@ -155,7 +97,7 @@ export function Navbar() {
                 <Input
                   type="search"
                   placeholder="Search products..."
-                  className="w-full pl-10 pr-4 h-11 rounded-full border-muted bg-muted/50 focus:bg-background"
+                  className="w-full pl-10 pr-4 h-11 rounded-full border border-gray-300"
                   value={searchQuery}
                   onChange={(e) => handleSearch(e.target.value)}
                   onFocus={() =>
@@ -172,10 +114,10 @@ export function Navbar() {
                   <Link
                     key={product._id}
                     href={`/products/${product._id}`}
-                    className="flex items-center gap-3 p-3 hover:bg-muted transition-colors"
+                    className="flex items-center gap-3 p-3 hover:bg-muted"
                     onClick={() => setShowResults(false)}
                   >
-                    <div className="w-10 h-10 rounded bg-muted overflow-hidden shrink-0">
+                    <div className="w-20 h-10 rounded bg-muted overflow-hidden shrink-0">
                       {product.image && (
                         <img
                           src={product.image}
@@ -234,30 +176,8 @@ export function Navbar() {
                     </DropdownMenuItem>
                   ))}
                 </div>
-                <div className="border-t p-2">
-                  <DropdownMenuItem asChild>
-                    <Link href="/products" className="w-full">
-                      View All Products
-                    </Link>
-                  </DropdownMenuItem>
-                </div>
               </DropdownMenuContent>
             </DropdownMenu>
-
-            {/* Cart */}
-            <Button
-              variant="ghost"
-              size="icon"
-              className="relative"
-              onClick={() => setIsCartOpen(true)}
-            >
-              <ShoppingCart className="h-5 w-5" />
-              {cartItems.length > 0 && (
-                <Badge className="absolute -top-1 -right-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                  {cartItems.reduce((sum, item) => sum + item.quantity, 0)}
-                </Badge>
-              )}
-            </Button>
 
             {/* User Menu */}
             {isAuthenticated ? (
@@ -268,7 +188,6 @@ export function Navbar() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  {/* Show different dashboard based on role */}
                   {user?.role === "admin" ? (
                     <DropdownMenuItem>
                       <Link href="/admin" className="w-full">
@@ -312,14 +231,16 @@ export function Navbar() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <div className="hidden sm:flex gap-2">
+              <div className="hidden sm:flex gap-2 items-center">
                 <Link href="/login">
                   <Button variant="ghost" size="sm">
-                    Sign In
+                    Login
                   </Button>
                 </Link>
                 <Link href="/signup">
-                  <Button size="sm">Sign Up</Button>
+                  <Button size="sm" className="bg-primary text-white">
+                    Get Started
+                  </Button>
                 </Link>
               </div>
             )}
@@ -348,7 +269,7 @@ export function Navbar() {
               <Input
                 type="search"
                 placeholder="Search products..."
-                className="w-full pl-10 h-10 rounded-full"
+                className="w-full pl-10 h-10 rounded-full border border-gray-300"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
@@ -393,16 +314,6 @@ export function Navbar() {
           </div>
         )}
       </div>
-
-      {/* Cart Drawer */}
-      <CartDrawer open={isCartOpen} onOpenChange={setIsCartOpen} />
-
-      {/* Add to Cart Mini Drawer */}
-      <AddToCartMiniDrawer
-        open={isAddToCartDrawerOpen}
-        onOpenChange={setIsAddToCartDrawerOpen}
-        product={addToCartProduct}
-      />
     </header>
   );
 }

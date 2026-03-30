@@ -181,147 +181,166 @@ export default function ProductDetailPage() {
       <Navbar />
 
       <main className="flex-1">
-        <div className="container mx-auto px-4 py-8">
-          {/* Breadcrumb */}
-          <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
-            <Link href="/" className="hover:text-primary">
-              Home
-            </Link>
-            <span>/</span>
-            <Link href="/products" className="hover:text-primary">
-              Products
-            </Link>
-            <span>/</span>
-            <span className="text-foreground">{currentProduct.name}</span>
+        {/* Page Header with gradient */}
+        <div className="relative overflow-hidden bg-gradient-to-r from-teal-500/10 via-primary/5 to-amber-500/10 py-6">
+          <div className="absolute inset-0 opacity-30">
+            <div className="absolute top-0 right-0 w-64 h-64 bg-teal-200/30 rounded-full blur-3xl" />
+            <div className="absolute bottom-0 left-0 w-48 h-48 bg-amber-200/30 rounded-full blur-3xl" />
           </div>
+          <div className="container mx-auto px-4 relative">
+            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 dark:text-white">
+              Product Details
+            </h1>
+          </div>
+        </div>
 
+        <div className="container mx-auto px-4 py-6">
           {/* Product Details */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 lg:gap-12">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Product Image */}
-            <div className="relative aspect-square rounded-xl overflow-hidden bg-muted">
-              {currentProduct.image ? (
-                <img
-                  src={currentProduct.image}
-                  alt={currentProduct.name}
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-muted-foreground">
-                  <span className="text-4xl">No Image</span>
-                </div>
-              )}
+            <div className="relative flex items-center justify-center">
+              <div className="relative aspect-square max-w-md rounded-xl overflow-hidden bg-muted shadow-md">
+                {currentProduct.image ? (
+                  <img
+                    src={currentProduct.image}
+                    alt={currentProduct.name}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-muted-foreground">
+                    <span className="text-4xl">No Image</span>
+                  </div>
+                )}
+                {/* Featured Badge */}
+                {currentProduct.isFeatured && (
+                  <div className="absolute top-3 left-3 bg-teal-500 text-white px-3 py-1 rounded-full text-xs font-medium shadow-md">
+                    Featured
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Product Info */}
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Category */}
-              <p className="text-sm text-muted-foreground uppercase tracking-wide">
+              <p className="text-xs font-medium text-teal-600 uppercase tracking-wider">
                 {currentProduct.category}
               </p>
 
               {/* Product Name */}
-              <h1 className="text-3xl md:text-4xl font-bold">
+              <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white leading-tight">
                 {currentProduct.name}
               </h1>
 
               {/* Price */}
-              <p className="text-3xl font-bold text-primary">
-                Rs. {currentProduct.price?.toLocaleString() || "0"}
-              </p>
+              <div className="flex items-baseline gap-2">
+                <p className="text-2xl font-bold text-teal-600">
+                  Rs. {currentProduct.price?.toLocaleString() || "0"}
+                </p>
+              </div>
 
               {/* Description */}
               <div className="prose prose-sm max-w-none">
-                <p className="text-muted-foreground">
+                <p className="text-muted-foreground text-sm">
                   {currentProduct.description || "No description available."}
                 </p>
               </div>
 
               {/* Quantity Selector */}
-              <div className="flex items-center gap-4">
-                <p className="font-medium">Quantity:</p>
-                <div className="flex items-center border rounded-lg">
+              <div className="flex items-center gap-3 py-3 border-y border-gray-100 dark:border-gray-800">
+                <p className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                  Quantity:
+                </p>
+                <div className="flex items-center border-2 border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={decreaseQuantity}
                     disabled={quantity <= 1}
+                    className="h-9 w-9 rounded-none hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     <Minus className="h-4 w-4" />
                   </Button>
-                  <span className="w-12 text-center font-medium">
+                  <span className="w-10 text-center font-bold text-sm">
                     {quantity}
                   </span>
                   <Button
                     variant="ghost"
                     size="icon"
                     onClick={increaseQuantity}
+                    className="h-9 w-9 rounded-none hover:bg-gray-100 dark:hover:bg-gray-800"
                   >
                     <Plus className="h-4 w-4" />
                   </Button>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  {currentProduct.isFeatured ? "In Stock" : "Out of Stock"}
+                </p>
               </div>
 
               {/* Action Buttons - Show based on isFeatured */}
               {currentProduct.isFeatured ? (
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Button
                     size="lg"
-                    className="flex-1"
+                    className="flex-1 h-11 text-sm"
                     onClick={handleAddToCart}
                     disabled={isAddingToCart}
                     variant="outline"
                   >
                     {addedToCart ? (
                       <>
-                        <Check className="h-5 w-5 mr-2" />
+                        <Check className="h-4 w-4 mr-2" />
                         Added to Cart
                       </>
                     ) : (
                       <>
-                        <ShoppingCart className="h-5 w-5 mr-2" />
+                        <ShoppingCart className="h-4 w-4 mr-2" />
                         Add to Cart
                       </>
                     )}
                   </Button>
                   <Button
                     size="lg"
-                    className="flex-1"
+                    className="flex-1 h-11 text-sm bg-[lab(6.13658_22.6572_-45.619)] hover:bg-[lab(5.5_20_-40)]"
                     onClick={handleBuyNow}
                     disabled={isAddingToCart}
                   >
-                    <CreditCard className="h-5 w-5 mr-2" />
+                    <CreditCard className="h-4 w-4 mr-2" />
                     Buy Now
                   </Button>
                   <Button
                     size="lg"
                     variant="outline"
-                    className="flex-1"
+                    className="flex-1 h-11 text-sm"
                     disabled
                   >
-                    <Heart className="h-5 w-5 mr-2 text-muted-foreground" />
+                    <Heart className="h-4 w-4 mr-2 text-muted-foreground" />
                     Wishlist
                   </Button>
                 </div>
               ) : (
-                <div className="flex flex-col sm:flex-row gap-4">
+                <div className="flex flex-col sm:flex-row gap-3">
                   <Button
                     size="lg"
-                    className="flex-1"
+                    className="flex-1 h-11 text-sm"
                     disabled
                     variant="secondary"
                   >
-                    <PackageX className="h-5 w-5 mr-2" />
+                    <PackageX className="h-4 w-4 mr-2" />
                     Out of Stock
                   </Button>
                   <Button
                     size="lg"
                     variant={isInWishlist ? "default" : "outline"}
-                    className="flex-1"
+                    className={`flex-1 h-11 text-sm ${
+                      isInWishlist ? "bg-red-500 hover:bg-red-600" : ""
+                    }`}
                     onClick={handleAddToWishlist}
                     disabled={isAddingToWishlist}
                   >
                     <Heart
-                      className={`h-5 w-5 mr-2 ${
+                      className={`h-4 w-4 mr-2 ${
                         isInWishlist ? "fill-current" : ""
                       }`}
                     />
@@ -331,23 +350,35 @@ export default function ProductDetailPage() {
               )}
 
               {/* Product Details Card */}
-              <Card>
-                <CardContent className="p-6 space-y-4">
-                  <h3 className="font-semibold">Product Details</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <p className="text-muted-foreground">Category</p>
-                      <p className="font-medium">{currentProduct.category}</p>
-                    </div>
-                    <div>
-                      <p className="text-muted-foreground">Featured</p>
-                      <p className="font-medium">
-                        {currentProduct.isFeatured ? "Yes" : "No"}
+              <Card className="shadow-md border-0 bg-gradient-to-br from-white to-gray-50 dark:from-gray-900 dark:to-gray-800">
+                <CardContent className="p-4 space-y-3">
+                  <h3 className="font-semibold text-sm">Product Details</h3>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div className="p-2 bg-white dark:bg-gray-800 rounded shadow-sm">
+                      <p className="text-muted-foreground text-[10px]">
+                        Category
+                      </p>
+                      <p className="font-medium text-xs">
+                        {currentProduct.category}
                       </p>
                     </div>
-                    <div>
-                      <p className="text-muted-foreground">Added On</p>
-                      <p className="font-medium">
+                    <div className="p-2 bg-white dark:bg-gray-800 rounded shadow-sm">
+                      <p className="text-muted-foreground text-[10px]">
+                        Status
+                      </p>
+                      <p className="font-medium text-xs">
+                        {currentProduct.isFeatured ? (
+                          <span className="text-teal-600">In Stock</span>
+                        ) : (
+                          <span className="text-red-500">Out of Stock</span>
+                        )}
+                      </p>
+                    </div>
+                    <div className="p-2 bg-white dark:bg-gray-800 rounded shadow-sm col-span-2">
+                      <p className="text-muted-foreground text-[10px]">
+                        Added On
+                      </p>
+                      <p className="font-medium text-xs">
                         {currentProduct.createdAt
                           ? new Date(
                               currentProduct.createdAt,
@@ -362,8 +393,11 @@ export default function ProductDetailPage() {
           </div>
 
           {/* Reviews Section */}
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold mb-6">Customer Reviews</h2>
+          <div className="mt-8">
+            <div className="flex items-center gap-4 mb-4">
+              <h2 className="text-lg font-bold">Customer Reviews</h2>
+              <div className="h-px flex-1 bg-gradient-to-r from-teal-500/50 to-transparent" />
+            </div>
             <ReviewsList productId={productId} />
           </div>
         </div>

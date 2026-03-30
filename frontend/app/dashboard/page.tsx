@@ -1,27 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import {
-  ShoppingBag,
-  User,
-  Settings,
-  LogOut,
-  LayoutDashboard,
-} from "lucide-react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { logout, initializeAuth } from "@/lib/features/auth/authSlice";
 import {
   fetchAllProducts,
-  fetchFeaturedProducts,
   Product,
 } from "@/lib/features/products/productsSlice";
 import { Navbar } from "@/components/Navbar";
 import { DashboardHero } from "@/components/DashboardHero";
-import { FeaturedProductsSlider } from "@/components/FeaturedProductsSlider";
+import { DashboardProducts } from "@/components/DashboardProducts";
 import { Footer } from "@/components/Footer";
 
 export default function DashboardPage() {
@@ -90,15 +80,6 @@ export default function DashboardPage() {
     dispatch(fetchAllProducts({}));
   }, [dispatch]);
 
-  const handleLogout = () => {
-    dispatch(logout());
-    toast.success("Logged out successfully!", {
-      description: "See you soon!",
-      icon: "✓",
-    });
-    router.push("/");
-  };
-
   // Show loading while checking auth
   if (isLoading) {
     return (
@@ -119,33 +100,16 @@ export default function DashboardPage() {
       <Navbar />
 
       {/* Personalized Hero Section */}
-      <DashboardHero userName={user.name.split(" ")[0]} />
+      <DashboardHero
+        userName={user.name.split(" ")[0]}
+        products={products}
+        isLoading={productsLoading}
+      />
 
       {/* Main Content */}
       <main className="flex-1">
-        {/* Featured Products for User */}
-        <FeaturedProductsSlider
-          products={products}
-          isLoading={productsLoading}
-        />
-
-        {/* Continue Shopping CTA */}
-        <section className="py-8">
-          <div className="container mx-auto px-4">
-            <div className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-xl p-8 text-center">
-              <h2 className="text-2xl font-bold mb-2">Ready to Shop More?</h2>
-              <p className="text-muted-foreground mb-6">
-                Discover amazing products at great prices
-              </p>
-              <Link href="/products">
-                <Button size="lg">
-                  <ShoppingBag className="mr-2 h-4 w-4" />
-                  Browse All Products
-                </Button>
-              </Link>
-            </div>
-          </div>
-        </section>
+        {/* All Products with Pagination */}
+        <DashboardProducts products={products} isLoading={productsLoading} />
       </main>
 
       {/* Footer */}

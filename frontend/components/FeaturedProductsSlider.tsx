@@ -57,9 +57,7 @@ export function FeaturedProductsSlider({
               <Star className="h-6 w-6 text-yellow-500 fill-yellow-500" />
             </div>
             <div>
-              <h2 className="text-2xl md:text-3xl font-bold">
-                Featured Products
-              </h2>
+              <h2 className="text-2xl md:text-3xl font-bold">Products</h2>
               <p className="text-muted-foreground">Handpicked for you</p>
             </div>
           </div>

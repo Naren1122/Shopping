@@ -4,6 +4,7 @@ import { Toaster } from "sonner";
 import "./globals.css";
 import StoreProvider from "./StoreProvider";
 import { ChatWidgetWrapper } from "@/components/ChatWidgetWrapper";
+import { AddToCartMiniDrawerWrapper } from "@/components/AddToCartMiniDrawerWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -44,6 +45,7 @@ export default function RootLayout({
             }}
           />
           <ChatWidgetWrapper />
+          <AddToCartMiniDrawerWrapper />
         </StoreProvider>
       </body>
     </html>

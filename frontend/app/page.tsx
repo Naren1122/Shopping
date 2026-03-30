@@ -9,11 +9,10 @@ import {
   Product,
 } from "@/lib/features/products/productsSlice";
 import { Navbar } from "@/components/Navbar";
-import { HeroSection } from "@/components/HeroSection";
+import HeroSection from "@/components/HeroSection";
 import { ProductCard } from "@/components/ProductCard";
-import { CategoryGrid } from "@/components/CategoryGrid";
-import { PromoBanner } from "@/components/PromoBanner";
 import { Footer } from "@/components/Footer";
+import { ChatWidgetWrapper } from "@/components/ChatWidgetWrapper";
 import {
   Pagination,
   PaginationContent,
@@ -23,8 +22,8 @@ import {
   PaginationPrevious,
 } from "@/components/ui/pagination";
 
-const PRODUCTS_PER_PAGE = 10;
-const PRODUCTS_PER_ROW = 5;
+const PRODUCTS_PER_PAGE = 8;
+const PRODUCTS_PER_ROW = 4;
 
 // API URL for backend
 const API_URL = "http://localhost:5000/api/auth";
@@ -124,19 +123,11 @@ export default function Home() {
         <section id="featured-products" className="py-16 bg-muted/30">
           <div className="container mx-auto px-4">
             {/* Section Header */}
-            <div className="text-center mb-12">
-              <h2 className="text-2xl md:text-3xl font-bold mb-3">
-                Featured Products
-              </h2>
-              <p className="text-muted-foreground">
-                Handpicked for you - Page {currentPage} of {totalPages}
-              </p>
-            </div>
 
-            {/* Products Grid - 5 products per row */}
+            {/* Products Grid - 4 products per row */}
             {isLoading ? (
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
-                {[...Array(10)].map((_, i) => (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                {[...Array(8)].map((_, i) => (
                   <div key={i} className="animate-pulse">
                     <div className="aspect-square bg-muted rounded-lg mb-4" />
                     <div className="h-4 bg-muted rounded w-1/3 mb-2" />
@@ -147,7 +138,7 @@ export default function Home() {
               </div>
             ) : currentProducts.length > 0 ? (
               <>
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                   {currentProducts.map((product: Product) => (
                     <ProductCard key={product._id} product={product} />
                   ))}
@@ -227,16 +218,13 @@ export default function Home() {
             )}
           </div>
         </section>
-
-        {/* Categories */}
-        <CategoryGrid />
-
-        {/* Promo Banner */}
-        <PromoBanner />
       </main>
 
       {/* Footer */}
       <Footer />
+
+      {/* Chat Widget */}
+      <ChatWidgetWrapper />
     </div>
   );
 }

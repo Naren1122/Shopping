@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -17,6 +17,7 @@ import {
   Truck,
   ShoppingBag,
   Trash2,
+  Star,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +28,6 @@ import { initializeAuth } from "@/lib/features/auth/authSlice";
 import { fetchOrderById } from "@/lib/features/orders/ordersSlice";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
-import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -61,6 +61,18 @@ export default function OrderDetailPage() {
   // Delete dialog state
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
+  // Review dialog state
+  const [reviewDialogOpen, setReviewDialogOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<{
+    productId: string;
+    name: string;
+    image?: string;
+  } | null>(null);
+  const [reviewRating, setReviewRating] = useState(5);
+  const [reviewComment, setReviewComment] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+  const [reviewedProducts, setReviewedProducts] = useState<string[]>([]);
 
   useEffect(() => {
     // Check auth
@@ -164,6 +176,50 @@ export default function OrderDetailPage() {
       );
     } finally {
       setDeleting(false);
+    }
+  };
+
+  // Handle submit review
+  const handleSubmitReview = async () => {
+    if (!selectedProduct || !reviewComment.trim()) return;
+
+    setSubmittingReview(true);
+    try {
+      const token = localStorage.getItem("token");
+      const response = await fetch(
+        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/reviews`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            productId: selectedProduct.productId,
+            rating: reviewRating,
+            comment: reviewComment,
+          }),
+        },
+      );
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || "Failed to submit review");
+      }
+
+      toast.success("Review submitted successfully!");
+      setReviewedProducts([...reviewedProducts, selectedProduct.productId]);
+      setReviewDialogOpen(false);
+      setSelectedProduct(null);
+      setReviewRating(5);
+      setReviewComment("");
+    } catch (err: unknown) {
+      console.error("Error submitting review:", err);
+      toast.error(
+        err instanceof Error ? err.message : "Failed to submit review",
+      );
+    } finally {
+      setSubmittingReview(false);
     }
   };
 
@@ -350,6 +406,34 @@ export default function OrderDetailPage() {
                               Qty: {item.quantity} × Rs.{" "}
                               {item.price.toLocaleString()}
                             </p>
+                            {/* Review button for delivered orders */}
+                            {order.orderStatus === "delivered" &&
+                              item.product && (
+                                <div className="mt-2">
+                                  {reviewedProducts.includes(item.product) ? (
+                                    <div className="flex items-center gap-1 text-sm text-green-600">
+                                      <Star className="h-4 w-4 fill-green-600" />
+                                      Reviewed
+                                    </div>
+                                  ) : (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedProduct({
+                                          productId: item.product,
+                                          name: item.name,
+                                          image: item.image,
+                                        });
+                                        setReviewDialogOpen(true);
+                                      }}
+                                    >
+                                      <Star className="h-4 w-4 mr-1" />
+                                      Write Review
+                                    </Button>
+                                  )}
+                                </div>
+                              )}
                           </div>
                           <div className="text-right">
                             <p className="font-medium">
@@ -629,6 +713,81 @@ export default function OrderDetailPage() {
               disabled={deleting}
             >
               {deleting ? "Deleting..." : "Delete Order"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Review Dialog */}
+      <Dialog open={reviewDialogOpen} onOpenChange={setReviewDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Write a Review</DialogTitle>
+            <DialogDescription>
+              How was your experience with {selectedProduct?.name}?
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4 space-y-4">
+            {/* Rating Selection */}
+            <div className="flex items-center justify-center gap-2">
+              {[1, 2, 3, 4, 5].map((star) => (
+                <button
+                  key={star}
+                  type="button"
+                  onClick={() => setReviewRating(star)}
+                  className="focus:outline-none"
+                >
+                  <Star
+                    className={`h-8 w-8 ${
+                      star <= reviewRating
+                        ? "fill-yellow-400 text-yellow-400"
+                        : "fill-muted text-muted"
+                    }`}
+                  />
+                </button>
+              ))}
+            </div>
+            <p className="text-center text-sm text-muted-foreground">
+              {reviewRating === 5
+                ? "Excellent!"
+                : reviewRating === 4
+                  ? "Great!"
+                  : reviewRating === 3
+                    ? "Good"
+                    : reviewRating === 2
+                      ? "Fair"
+                      : "Poor"}
+            </p>
+            {/* Comment */}
+            <div>
+              <label className="text-sm font-medium mb-2 block">
+                Your Review
+              </label>
+              <Textarea
+                value={reviewComment}
+                onChange={(e) => setReviewComment(e.target.value)}
+                placeholder="Share your experience with this product..."
+                rows={4}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setReviewDialogOpen(false);
+                setSelectedProduct(null);
+                setReviewRating(5);
+                setReviewComment("");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSubmitReview}
+              disabled={submittingReview || !reviewComment.trim()}
+            >
+              {submittingReview ? "Submitting..." : "Submit Review"}
             </Button>
           </DialogFooter>
         </DialogContent>

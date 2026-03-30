@@ -147,32 +147,36 @@ export function CartItem({ item }: CartItemProps) {
                 </Button>
               </div>
             </div>
-
-            {/* Buy Now Button */}
-            <div className="mt-3">
-              <Button size="sm" className="w-full" onClick={handleBuyNow}>
-                <CreditCard className="h-4 w-4 mr-2" />
-                Buy Now
-              </Button>
-            </div>
           </div>
 
-          {/* Line Total (mobile-friendly) */}
-          <div className="hidden sm:block text-right shrink-0">
-            <p className="text-sm text-muted-foreground">Subtotal</p>
-            <p className="font-bold text-lg">
-              Rs. {lineTotal.toLocaleString()}
-            </p>
+          {/* Line Total & Buy Now - Right Side */}
+          <div className="hidden sm:flex flex-col items-end justify-between shrink-0">
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Subtotal</p>
+              <p className="font-bold text-lg">
+                Rs. {lineTotal.toLocaleString()}
+              </p>
+            </div>
+            <Button size="sm" onClick={handleBuyNow}>
+              <CreditCard className="h-4 w-4 mr-2" />
+              Buy Now
+            </Button>
           </div>
         </div>
 
-        {/* Mobile Line Total */}
+        {/* Mobile Line Total & Buy Now */}
         <div className="flex sm:hidden justify-end mt-3 pt-3 border-t">
-          <div className="text-right">
-            <p className="text-sm text-muted-foreground">Subtotal</p>
-            <p className="font-bold text-lg">
-              Rs. {lineTotal.toLocaleString()}
-            </p>
+          <div className="flex items-center justify-between w-full gap-3">
+            <div className="text-right">
+              <p className="text-sm text-muted-foreground">Subtotal</p>
+              <p className="font-bold text-lg">
+                Rs. {lineTotal.toLocaleString()}
+              </p>
+            </div>
+            <Button size="sm" onClick={handleBuyNow}>
+              <CreditCard className="h-4 w-4 mr-2" />
+              Buy Now
+            </Button>
           </div>
         </div>
       </CardContent>
