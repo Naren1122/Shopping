@@ -78,62 +78,65 @@ export function AddressCard({ address, isSelected }: AddressCardProps) {
     <Card
       className={`cursor-pointer transition-all ${
         isSelected
-          ? "border-primary ring-2 ring-primary/20"
+          ? "border-primary ring-1 ring-primary/20"
           : "hover:border-muted-foreground/50"
       }`}
       onClick={handleSelect}
     >
-      <CardContent className="p-4">
-        <div className="flex items-start justify-between gap-3">
+      <CardContent className="p-3.5">
+        <div className="flex items-start gap-3">
           {/* Selection indicator */}
-          <div className="shrink-0 mt-1">
+          <div className="shrink-0 mt-0.5">
             {isSelected ? (
-              <CheckCircle className="h-6 w-6 text-primary" />
+              <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
+                <CheckCircle className="h-3.5 w-3.5 text-primary-foreground" />
+              </div>
             ) : (
-              <div className="h-6 w-6 rounded-full border-2 border-muted-foreground/30" />
+              <div className="h-5 w-5 rounded-full border-2 border-muted-foreground/30 bg-background" />
             )}
           </div>
 
           {/* Address content */}
           <div className="flex-1 min-w-0">
             {/* Header with default badge */}
-            <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-1.5 mb-2">
               {address.isDefault && (
-                <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-primary/10 text-primary">
-                  <Star className="h-3 w-3 mr-1" />
+                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-primary/10 text-primary">
+                  <Star className="h-2.5 w-2.5 mr-1" />
                   Default
                 </span>
               )}
             </div>
 
             {/* Address details */}
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               <div className="flex items-start gap-2">
                 <MapPin className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-                <p className="text-sm text-foreground">{formatAddress()}</p>
+                <p className="text-xs text-foreground">{formatAddress()}</p>
               </div>
 
               {address.phone && (
                 <div className="flex items-center gap-2">
                   <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                  <p className="text-sm text-foreground">{address.phone}</p>
+                  <p className="text-xs text-foreground">{address.phone}</p>
                 </div>
               )}
             </div>
 
             {/* Action buttons */}
-            <div className="flex items-center gap-2 mt-4">
+            <div className="flex items-center gap-1.5 mt-3 pt-2 border-t border-border/50">
               {!address.isDefault && (
                 <Button
                   variant="outline"
                   size="sm"
+                  className="text-xs h-7 px-2"
                   onClick={(e) => {
                     e.stopPropagation();
                     handleSetDefault();
                   }}
                   disabled={isSettingDefault}
                 >
-                  <Star className="h-4 w-4 mr-1" />
+                  <Star className="h-3 w-3 mr-1" />
                   Set Default
                 </Button>
               )}
@@ -146,26 +149,29 @@ export function AddressCard({ address, isSelected }: AddressCardProps) {
                   <Button
                     variant="ghost"
                     size="sm"
-                    className="text-muted-foreground hover:text-destructive"
+                    className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
                     onClick={(e) => {
                       e.stopPropagation();
                     }}
                   >
-                    <Trash2 className="h-4 w-4" />
+                    <Trash2 className="h-3.5 w-3.5" />
                   </Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle>Delete Address</DialogTitle>
-                    <DialogDescription>
+                    <DialogTitle className="text-base">
+                      Delete Address
+                    </DialogTitle>
+                    <DialogDescription className="text-sm">
                       Are you sure you want to delete this address? This action
                       cannot be undone.
                     </DialogDescription>
                   </DialogHeader>
-                  <DialogFooter>
+                  <DialogFooter className="gap-2 sm:gap-0">
                     <Button
                       variant="outline"
                       onClick={() => setDeleteDialogOpen(false)}
+                      className="flex-1 sm:flex-none"
                     >
                       Cancel
                     </Button>
@@ -173,6 +179,7 @@ export function AddressCard({ address, isSelected }: AddressCardProps) {
                       variant="destructive"
                       onClick={handleDelete}
                       disabled={isDeleting}
+                      className="flex-1 sm:flex-none"
                     >
                       {isDeleting ? "Deleting..." : "Delete"}
                     </Button>

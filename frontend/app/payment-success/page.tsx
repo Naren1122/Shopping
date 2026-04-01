@@ -1,5 +1,5 @@
 "use client";
-
+export const dynamic = "force-dynamic";  
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { useAppDispatch } from "@/lib/hooks";
+import { initializeAuth } from "@/lib/features/auth/authSlice";
 
 interface OrderDetails {
   _id: string;
@@ -38,6 +40,7 @@ interface OrderDetails {
 export default function PaymentSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
+  const dispatch = useAppDispatch();
 
   // Check if user has a token in localStorage (more reliable than Redux state after redirect)
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -52,9 +55,21 @@ export default function PaymentSuccessPage() {
   // Check authentication from localStorage (survives server-side redirects)
   useEffect(() => {
     const token = localStorage.getItem("token");
-    setIsAuthenticated(!!token);
+    const userStr = localStorage.getItem("user");
+
+    if (token && userStr) {
+      try {
+        const user = JSON.parse(userStr);
+        dispatch(initializeAuth({ user, token }));
+        setIsAuthenticated(true);
+      } catch (e) {
+        setIsAuthenticated(false);
+      }
+    } else {
+      setIsAuthenticated(false);
+    }
     setAuthChecked(true);
-  }, []);
+  }, [dispatch]);
 
   // Redirect to login if not authenticated after checking
   useEffect(() => {
@@ -88,7 +103,7 @@ export default function PaymentSuccessPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `http://localhost:5000/api/orders/${orderId}`,
+        `/api/orders/${orderId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

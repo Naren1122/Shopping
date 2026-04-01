@@ -9,6 +9,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
+
+export const dynamic = "force-dynamic";
 export default function PaymentFailedPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
