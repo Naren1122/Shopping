@@ -1,5 +1,7 @@
-"use client";
-export const dynamic = "force-dynamic";  
+export const dynamic = "force-dynamic";
+
+("use client");
+
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
@@ -102,14 +104,11 @@ export default function PaymentSuccessPage() {
     }
     try {
       const token = localStorage.getItem("token");
-      const response = await fetch(
-        `/api/orders/${orderId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch(`/api/orders/${orderId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       if (response.ok) {
         const data = await response.json();

@@ -1,4 +1,6 @@
-"use client";
+export const dynamic = "force-dynamic";
+
+("use client");
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -9,8 +11,6 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 
-
-export const dynamic = "force-dynamic";
 export default function PaymentFailedPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
