@@ -1,6 +1,4 @@
-export const dynamic = "force-dynamic";
-
-("use client");
+"use client";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -20,7 +18,6 @@ export default function PaymentFailedPage() {
   const handleRetry = () => {
     setIsRetrying(true);
     if (orderId) {
-      // Try to initiate payment again - in real implementation, you'd call the API
       router.push(`/checkout/payment?orderId=${orderId}`);
     } else {
       router.push("/cart");
@@ -34,7 +31,6 @@ export default function PaymentFailedPage() {
 
       <main className="flex-1 container mx-auto px-4 py-16">
         <div className="max-w-2xl mx-auto">
-          {/* Failure Header */}
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-red-100 mb-6">
               <XCircle className="h-10 w-10 text-red-600" />
@@ -51,7 +47,6 @@ export default function PaymentFailedPage() {
             )}
           </div>
 
-          {/* Error Details Card */}
           <Card className="mb-8">
             <CardContent className="pt-6">
               <div className="flex items-start gap-4 p-4 bg-red-50 rounded-lg">
@@ -69,7 +64,6 @@ export default function PaymentFailedPage() {
             </CardContent>
           </Card>
 
-          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Button
               variant="outline"
@@ -98,7 +92,6 @@ export default function PaymentFailedPage() {
             </Link>
           </div>
 
-          {/* Help Text */}
           <div className="mt-8 text-center text-sm text-muted-foreground">
             <p>
               If the problem persists, please contact our support team at{" "}
