@@ -71,7 +71,7 @@ export default function AdminOrderDetailPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/${orderId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "/api"}/orders/${orderId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -104,7 +104,7 @@ export default function AdminOrderDetailPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/${orderId}/status`,
+        `${process.env.NEXT_PUBLIC_API_URL || "/api"}/orders/${orderId}/status`,
         {
           method: "PATCH",
           headers: {

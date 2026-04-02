@@ -115,7 +115,7 @@ export default function AdminDashboardPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/analytics/overview`,
+        `${process.env.NEXT_PUBLIC_API_URL || "/api"}/analytics/overview`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -166,7 +166,7 @@ export default function AdminDashboardPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/admin/all?limit=5`,
+        `${process.env.NEXT_PUBLIC_API_URL || "/api"}/orders/admin/all?limit=5`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

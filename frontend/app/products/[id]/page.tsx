@@ -53,7 +53,7 @@ export default function ProductDetailPage() {
       // Track browsing history if user is authenticated
       const token = localStorage.getItem("token");
       if (token) {
-        fetch("http://localhost:5000/api/auth/track-view", {
+        fetch("/api/auth/track-view", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

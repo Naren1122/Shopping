@@ -67,7 +67,7 @@ export const fetchAllProducts = createAsyncThunk(
       if (params.limit) queryParams.append("limit", params.limit.toString());
 
       const response = await fetch(
-        `http://localhost:5000/api/products?${queryParams.toString()}`,
+        `/api/products?${queryParams.toString()}`,
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           credentials: "include",
@@ -96,7 +96,7 @@ export const fetchFeaturedProducts = createAsyncThunk(
         ? `?category=${encodeURIComponent(category)}`
         : "";
       const response = await fetch(
-        `http://localhost:5000/api/products/featured${queryParams}`,
+        `/api/products/featured${queryParams}`,
         {
           credentials: "include",
         },
@@ -139,7 +139,7 @@ export const searchProducts = createAsyncThunk(
   async (query: string, { rejectWithValue }) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/products/search?q=${encodeURIComponent(query)}`,
+        `/api/products/search?q=${encodeURIComponent(query)}`,
         {
           credentials: "include",
         },
@@ -168,7 +168,7 @@ export const fetchProductsByCategory = createAsyncThunk(
     try {
       const { category, page = 1, limit = 10 } = params;
       const response = await fetch(
-        `http://localhost:5000/api/products/category/${encodeURIComponent(category)}?page=${page}&limit=${limit}`,
+        `/api/products/category/${encodeURIComponent(category)}?page=${page}&limit=${limit}`,
         {
           credentials: "include",
         },
@@ -202,7 +202,7 @@ export const createProduct = createAsyncThunk(
   ) => {
     try {
       const token = getToken();
-      const response = await fetch("http://localhost:5000/api/products", {
+      const response = await fetch("/api/products", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -232,7 +232,7 @@ export const deleteProduct = createAsyncThunk(
     try {
       const token = getToken();
       const response = await fetch(
-        `http://localhost:5000/api/products/${productId}`,
+        `/api/products/${productId}`,
         {
           method: "DELETE",
           headers: {
@@ -262,7 +262,7 @@ export const toggleFeatured = createAsyncThunk(
     try {
       const token = getToken();
       const response = await fetch(
-        `http://localhost:5000/api/products/${productId}`,
+        `/api/products/${productId}`,
         {
           method: "PATCH",
           headers: {
@@ -298,7 +298,7 @@ export const updateProduct = createAsyncThunk(
     try {
       const token = getToken();
       const response = await fetch(
-        `http://localhost:5000/api/products/${productId}`,
+        `/api/products/${productId}`,
         {
           method: "PUT",
           headers: {
@@ -330,7 +330,7 @@ export const fetchProductById = createAsyncThunk(
     try {
       const token = getToken();
       const response = await fetch(
-        `http://localhost:5000/api/products/${productId}`,
+        `/api/products/${productId}`,
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           credentials: "include",
@@ -372,7 +372,7 @@ const productsSlice = createSlice({
       .addCase(fetchAllProducts.fulfilled, (state, action) => {
         state.isLoading = false;
         state.products = action.payload.products;
-        state.total = action.payload.total;
+        state.total = action.payload.total;https://shopping-1-r5zt.onrender.com/
         state.page = action.payload.page;
         state.pages = action.payload.pages;
       })

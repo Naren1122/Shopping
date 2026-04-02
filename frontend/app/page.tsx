@@ -26,7 +26,7 @@ const PRODUCTS_PER_PAGE = 8;
 const PRODUCTS_PER_ROW = 4;
 
 // API URL for backend
-const API_URL = "http://localhost:5000/api/auth";
+const API_URL = "/api/auth";
 
 export default function Home() {
   const router = useRouter();

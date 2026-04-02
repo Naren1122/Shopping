@@ -65,7 +65,7 @@ export const fetchUserOrders = createAsyncThunk(
         return rejectWithValue("Not authenticated");
       }
 
-      const response = await fetch("http://localhost:5000/api/orders", {
+      const response = await fetch("/api/orders", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -94,15 +94,12 @@ export const fetchOrderById = createAsyncThunk(
         return rejectWithValue("Not authenticated");
       }
 
-      const response = await fetch(
-        `http://localhost:5000/api/orders/${orderId}`,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: "include",
+      const response = await fetch(`/api/orders/${orderId}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+        credentials: "include",
+      });
 
       const data = await response.json();
 

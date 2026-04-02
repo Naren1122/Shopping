@@ -40,7 +40,7 @@ export const fetchWishlist = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const token = getToken();
-      const response = await fetch("http://localhost:5000/api/wishlist", {
+      const response = await fetch("/api/wishlist", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -66,7 +66,7 @@ export const addToWishlist = createAsyncThunk(
   async (productId: string, { rejectWithValue }) => {
     try {
       const token = getToken();
-      const response = await fetch("http://localhost:5000/api/wishlist", {
+      const response = await fetch("/api/wishlist", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -98,16 +98,13 @@ export const removeFromWishlist = createAsyncThunk(
       console.log("removeFromWishlist: Token:", token ? "exists" : "null");
       console.log("removeFromWishlist: Product ID:", productId);
 
-      const response = await fetch(
-        `http://localhost:5000/api/wishlist/${productId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: "include",
+      const response = await fetch(`/api/wishlist/${productId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+        credentials: "include",
+      });
 
       console.log("removeFromWishlist: Response status:", response.status);
 

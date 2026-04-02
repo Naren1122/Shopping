@@ -114,7 +114,7 @@ export default function OrderDetailPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/${order._id}/cancel`,
+        `${process.env.NEXT_PUBLIC_API_URL || "/api"}/orders/${order._id}/cancel`,
         {
           method: "PATCH",
           headers: {
@@ -153,7 +153,7 @@ export default function OrderDetailPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/${order._id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "/api"}/orders/${order._id}`,
         {
           method: "DELETE",
           headers: {
@@ -187,7 +187,7 @@ export default function OrderDetailPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/reviews`,
+        `${process.env.NEXT_PUBLIC_API_URL || "/api"}/reviews`,
         {
           method: "POST",
           headers: {

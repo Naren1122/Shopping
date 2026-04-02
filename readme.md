@@ -325,7 +325,7 @@ GEMINI_API_KEY=your_gemini_api_key
 #### Frontend (`frontend/.env.local`)
 
 ```env
-NEXT_PUBLIC_API_URL=http://localhost:5000/api
+NEXT_PUBLIC_API_URL=/api
 NEXT_PUBLIC_APP_URL=http://localhost:3000
 ```
 

@@ -109,7 +109,7 @@ export default function AdminOrdersPage() {
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/admin/all?${queryParams.toString()}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "/api"}/orders/admin/all?${queryParams.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -143,7 +143,7 @@ export default function AdminOrdersPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/${orderId}/status`,
+        `${process.env.NEXT_PUBLIC_API_URL || "/api"}/orders/${orderId}/status`,
         {
           method: "PATCH",
           headers: {
@@ -188,7 +188,7 @@ export default function AdminOrdersPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/${orderToCancel._id}/cancel`,
+        `${process.env.NEXT_PUBLIC_API_URL || "/api"}/orders/${orderToCancel._id}/cancel`,
         {
           method: "PATCH",
           headers: {
@@ -237,7 +237,7 @@ export default function AdminOrdersPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/${orderToDelete._id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || "/api"}/orders/${orderToDelete._id}`,
         {
           method: "DELETE",
           headers: {

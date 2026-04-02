@@ -24,7 +24,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { login, clearError } from "@/lib/features/auth/authSlice";
 
 // API URL for backend
-const API_URL = "http://localhost:5000/api/auth";
+const API_URL = "/api/auth";
 
 // Zod schema for login
 const loginSchema = z.object({

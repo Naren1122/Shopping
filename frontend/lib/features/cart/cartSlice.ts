@@ -46,7 +46,7 @@ export const fetchCart = createAsyncThunk(
         return rejectWithValue("Please login to view cart");
       }
 
-      const response = await fetch("http://localhost:5000/api/cart", {
+      const response = await fetch("/api/cart", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -81,7 +81,7 @@ export const addToCart = createAsyncThunk(
         return rejectWithValue("Please login to add items to cart");
       }
 
-      const response = await fetch("http://localhost:5000/api/cart", {
+      const response = await fetch("/api/cart", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -116,7 +116,7 @@ export const removeFromCart = createAsyncThunk(
         return rejectWithValue("Please login to manage cart");
       }
 
-      const response = await fetch("http://localhost:5000/api/cart", {
+      const response = await fetch("/api/cart", {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -154,18 +154,15 @@ export const updateCartQuantity = createAsyncThunk(
         return rejectWithValue("Please login to update cart");
       }
 
-      const response = await fetch(
-        `http://localhost:5000/api/cart/${productId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ quantity }),
-          credentials: "include",
+      const response = await fetch(`/api/cart/${productId}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
         },
-      );
+        body: JSON.stringify({ quantity }),
+        credentials: "include",
+      });
 
       const data = await response.json();
 

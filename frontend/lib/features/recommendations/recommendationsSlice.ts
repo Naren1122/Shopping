@@ -47,7 +47,7 @@ export const fetchRecommendations = createAsyncThunk(
         return rejectWithValue("Not authenticated");
       }
 
-      const response = await fetch("http://localhost:5000/api/recommendations", {
+      const response = await fetch("/api/recommendations", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -57,7 +57,9 @@ export const fetchRecommendations = createAsyncThunk(
       const data = await response.json();
 
       if (!response.ok) {
-        return rejectWithValue(data.message || "Failed to fetch recommendations");
+        return rejectWithValue(
+          data.message || "Failed to fetch recommendations",
+        );
       }
 
       return data.recommendations;
