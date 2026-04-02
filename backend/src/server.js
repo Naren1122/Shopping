@@ -17,6 +17,13 @@ import analyticsRoutes from "./routes/analytics.route.js";
 import chatRoutes from "./routes/chat.route.js";
 
 dotenv.config({ path: "./src/.env" });
+
+// Log environment variables for debugging
+console.log("=== Environment Variables ===");
+console.log("BACKEND_URL:", process.env.BACKEND_URL);
+console.log("FRONTEND_URL:", process.env.FRONTEND_URL);
+console.log("ESEWA_URL:", process.env.ESEWA_URL);
+
 const app = express();
 connectDB();
 const PORT = process.env.PORT || 5001;

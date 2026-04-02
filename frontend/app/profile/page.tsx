@@ -117,7 +117,7 @@ export default function ProfilePage() {
       description: "See you soon!",
       icon: "✓",
     });
-    router.push("/");
+    window.location.href = "/";
   };
 
   // Handle password change

@@ -116,9 +116,9 @@ export const logout = createAsyncThunk("auth/logout", async () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     document.cookie =
-      "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; sameSite=lax";
     document.cookie =
-      "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
+      "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; sameSite=lax";
   }
   return null;
 });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -23,10 +23,8 @@ import {
 import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { login, clearError } from "@/lib/features/auth/authSlice";
 
-// API URL for backend
 const API_URL = "/api/auth";
 
-// Zod schema for login
 const loginSchema = z.object({
   email: z
     .string()
@@ -40,9 +38,9 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const router = useRouter();
   const dispatch = useAppDispatch();
-  const { isLoading, error } = useAppSelector((state) => state.auth);
-
+  const { isLoading, error, isAuthenticated, user } = useAppSelector((state) => state.auth);
   const [showPassword, setShowPassword] = useState(false);
+  const hasLoggedIn = useRef(false);
 
   const {
     register,
@@ -58,6 +56,7 @@ export default function LoginPage() {
 
   const onSubmit = async (data: LoginFormData) => {
     dispatch(clearError());
+    hasLoggedIn.current = false;
 
     try {
       await dispatch(
@@ -71,21 +70,6 @@ export default function LoginPage() {
     }
   };
 
-  // Redirect already authenticated users
-  const { isAuthenticated: isAuth, user } = useAppSelector(
-    (state) => state.auth,
-  );
-  useEffect(() => {
-    if (isAuth) {
-      if (user?.role === "admin") {
-        router.replace("/admin");
-      } else {
-        router.replace("/dashboard");
-      }
-    }
-  }, [isAuth, user, router]);
-
-  // Check authentication on page mount - redirect if already logged in
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -95,7 +79,6 @@ export default function LoginPage() {
           credentials: "include",
         });
 
-        // Skip redirect if response is not OK or not JSON
         if (
           !response.ok ||
           response.headers.get("content-type")?.indexOf("application/json") ===
@@ -110,7 +93,6 @@ export default function LoginPage() {
           router.replace(data.redirectTo);
         }
       } catch (error) {
-        // Silently fail - user stays on login page
         console.error("Auth check failed:", error);
       }
     };
@@ -118,34 +100,29 @@ export default function LoginPage() {
     checkAuth();
   }, [router]);
 
-  // Check for successful login and redirect
-  const { isAuthenticated, user: currentUser } = useAppSelector(
-    (state) => state.auth,
-  );
+  // Only redirect after successful login (not on page load)
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && user && !hasLoggedIn.current) {
+      hasLoggedIn.current = true;
       toast.success("Logged in successfully!", {
         description: "Welcome back!",
         icon: "✓",
       });
-      // Redirect based on user role
-      if (currentUser?.role === "admin") {
+      if (user.role === "admin") {
         router.push("/admin");
       } else {
         router.push("/dashboard");
       }
     }
-  }, [isAuthenticated, currentUser, router]);
+  }, [isAuthenticated, user, router]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-background p-4">
-      {/* Background Pattern */}
       <div className="fixed inset-0 -z-10 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-background to-background" />
       </div>
 
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="flex justify-center ">
           <div className="relative w-32 h-20">
             <Image
@@ -168,14 +145,12 @@ export default function LoginPage() {
 
           <form onSubmit={handleSubmit(onSubmit)}>
             <CardContent className="space-y-4 pt-4">
-              {/* Error Message */}
               {error && (
                 <div className="p-3 rounded-lg bg-destructive/10 border border-destructive/20 text-destructive text-sm">
                   {error}
                 </div>
               )}
 
-              {/* Email Field */}
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
                 <Input
@@ -193,7 +168,6 @@ export default function LoginPage() {
                 )}
               </div>
 
-              {/* Password Field */}
               <div className="space-y-2">
                 <div className="flex items-center justify-between">
                   <Label htmlFor="password">Password</Label>

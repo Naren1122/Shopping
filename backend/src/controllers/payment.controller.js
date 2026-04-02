@@ -108,6 +108,9 @@ export const initiateEsewaPayment = async (req, res) => {
     const signature = generateSignature(signatureData, secretKey);
     console.log("[eSewa] Generated Signature:", signature);
 
+    const backendUrl = process.env.BACKEND_URL || "http://localhost:5000";
+    console.log("[eSewa] Backend URL:", backendUrl);
+
     // Return all required eSewa form parameters
     res.json({
       paymentUrl: esewaUrl,
@@ -118,8 +121,8 @@ export const initiateEsewaPayment = async (req, res) => {
       product_code: merchantId,
       total_amount: totalAmount,
       transaction_uuid: transactionUuid,
-      success_url: `/api/payments/esewa/success`,
-      failure_url: `/api/payments/esewa/failure`,
+      success_url: `${backendUrl}/api/payments/esewa/success`,
+      failure_url: `${backendUrl}/api/payments/esewa/failure`,
       signed_field_names: signedFieldNames,
       signature,
       orderId: order._id,

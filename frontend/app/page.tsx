@@ -24,22 +24,21 @@ import {
 
 const PRODUCTS_PER_PAGE = 8;
 const PRODUCTS_PER_ROW = 4;
-
-// API URL for backend
 const API_URL = "/api/auth";
 
 export default function Home() {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const { products, featuredProducts, isLoading } = useAppSelector(
     (state) => state.products,
   );
-  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
 
-  // Redirect authenticated users to their dashboard (client-side check)
+  const [currentPage, setCurrentPage] = useState(1);
+
   useEffect(() => {
-    if (isAuthenticated) {
-      if (user?.role === "admin") {
+    if (isAuthenticated && user) {
+      if (user.role === "admin") {
         router.replace("/admin");
       } else {
         router.replace("/dashboard");
@@ -47,7 +46,6 @@ export default function Home() {
     }
   }, [isAuthenticated, user, router]);
 
-  // Check authentication on page mount - redirect if already logged in (backend check)
   useEffect(() => {
     const checkAuth = async () => {
       try {
@@ -57,7 +55,6 @@ export default function Home() {
           credentials: "include",
         });
 
-        // Skip redirect if response is not OK or not JSON
         if (
           !response.ok ||
           response.headers.get("content-type")?.indexOf("application/json") ===
@@ -72,7 +69,6 @@ export default function Home() {
           router.replace(data.redirectTo);
         }
       } catch (error) {
-        // Silently fail - user stays on homepage
         console.error("Auth check failed:", error);
       }
     };
@@ -80,20 +76,15 @@ export default function Home() {
     checkAuth();
   }, [router]);
 
-  const [currentPage, setCurrentPage] = useState(1);
-
   useEffect(() => {
-    // Fetch both all products and featured products
     dispatch(fetchAllProducts({}));
     dispatch(fetchFeaturedProducts(""));
   }, [dispatch]);
 
-  // Use all products from the store (includes both featured and unfeatured)
   const allProducts = products;
   const unfeaturedProducts = allProducts.filter((p) => !p.isFeatured);
   const featuredOnly = allProducts.filter((p) => p.isFeatured);
 
-  // Calculate pagination for all products (including unfeatured)
   const totalProducts = allProducts.length;
   const totalPages = Math.ceil(totalProducts / PRODUCTS_PER_PAGE);
   const startIndex = (currentPage - 1) * PRODUCTS_PER_PAGE;
@@ -102,7 +93,6 @@ export default function Home() {
 
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
-    // Scroll to top of products section
     const productsSection = document.getElementById("featured-products");
     if (productsSection) {
       productsSection.scrollIntoView({ behavior: "smooth" });
@@ -111,20 +101,13 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Navigation */}
       <Navbar />
 
-      {/* Main Content */}
       <main className="flex-1">
-        {/* Hero Section */}
         <HeroSection />
 
-        {/* Featured Products with Pagination */}
         <section id="featured-products" className="py-16 bg-muted/30">
           <div className="container mx-auto px-4">
-            {/* Section Header */}
-
-            {/* Products Grid - 4 products per row */}
             {isLoading ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                 {[...Array(8)].map((_, i) => (
@@ -144,7 +127,6 @@ export default function Home() {
                   ))}
                 </div>
 
-                {/* Pagination Controls */}
                 {totalPages > 1 && (
                   <div className="mt-12">
                     <Pagination>
@@ -166,7 +148,6 @@ export default function Home() {
                           />
                         </PaginationItem>
 
-                        {/* Page Numbers */}
                         {[...Array(totalPages)].map((_, i) => (
                           <PaginationItem key={i + 1}>
                             <PaginationLink
@@ -220,10 +201,7 @@ export default function Home() {
         </section>
       </main>
 
-      {/* Footer */}
       <Footer />
-
-      {/* Chat Widget */}
       <ChatWidgetWrapper />
     </div>
   );

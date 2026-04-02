@@ -211,6 +211,13 @@ export default function AdminDashboardPage() {
 
   const handleLogout = () => {
     dispatch(logout());
+    // Clear localStorage to ensure complete logout
+    localStorage.removeItem("token");
+    localStorage.removeItem("user");
+    sessionStorage.clear();
+    // Clear cookies
+    document.cookie = "accessToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; sameSite=lax";
+    document.cookie = "refreshToken=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/; sameSite=lax";
     toast.success("Logged out successfully!", {
       description: "See you soon!",
       icon: "✓",
