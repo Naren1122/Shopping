@@ -14,8 +14,14 @@ export const getOverview = async (req, res) => {
     const totalOrders = await Order.countDocuments();
     const totalProducts = await Product.countDocuments();
 
-    // Get total revenue (sum of all order totals)
+    // Get total revenue (sum of all delivered order totals)
     const revenueResult = await Order.aggregate([
+      {
+        $match: { 
+          orderStatus: "delivered",
+          paymentStatus: "paid"
+        }
+      },
       {
         $group: {
           _id: null,
@@ -25,16 +31,23 @@ export const getOverview = async (req, res) => {
     ]);
     const totalRevenue = revenueResult[0]?.totalRevenue || 0;
 
-    // Get today's orders
+    // Get today's orders (delivered)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const todayOrders = await Order.countDocuments({
       createdAt: { $gte: today },
+      orderStatus: "delivered",
     });
 
-    // Get today's revenue
+    // Get today's revenue (delivered orders)
     const todayRevenueResult = await Order.aggregate([
-      { $match: { createdAt: { $gte: today } } },
+      { 
+        $match: { 
+          createdAt: { $gte: today },
+          orderStatus: "delivered",
+          paymentStatus: "paid"
+        }
+      },
       {
         $group: {
           _id: null,
@@ -84,7 +97,8 @@ export const getSalesAnalytics = async (req, res) => {
       {
         $match: {
           createdAt: { $gte: startDate },
-          paymentStatus: "paid", // Only completed orders
+          paymentStatus: "paid",
+          orderStatus: "delivered",
         },
       },
       {
@@ -149,7 +163,7 @@ export const getOrderAnalytics = async (req, res) => {
 export const getTopProducts = async (req, res) => {
   try {
     const topProducts = await Order.aggregate([
-      { $match: { paymentStatus: "paid" } },
+      { $match: { paymentStatus: "paid", orderStatus: "delivered" } },
       { $unwind: "$orderItems" },
       {
         $group: {

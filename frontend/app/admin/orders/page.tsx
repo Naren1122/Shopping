@@ -465,8 +465,9 @@ export default function AdminOrdersPage() {
                                   <XCircle className="w-4 h-4" />
                                 </Button>
                               )}
-                            {/* Delete button - only show for cancelled orders */}
-                            {order.orderStatus === "cancelled" && (
+                            {/* Delete button - show for delivered and cancelled orders */}
+                            {(order.orderStatus === "delivered" ||
+                              order.orderStatus === "cancelled") && (
                               <Button
                                 variant="ghost"
                                 size="sm"

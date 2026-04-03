@@ -9,7 +9,7 @@ export const getAllProducts = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const products = await Product.find({}).skip(skip).limit(limit).lean();
+    const products = await Product.find({}).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
     const total = await Product.countDocuments({});
 
     // Get review stats for each product
@@ -158,6 +158,8 @@ export const createProduct = async (req, res) => {
         : "",
       category,
     });
+
+    await updateFeaturedProductsCache();
 
     res.status(201).json(product);
   } catch (error) {
