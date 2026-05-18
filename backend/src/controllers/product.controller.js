@@ -1,7 +1,6 @@
 import Product from "../models/product.model.js";
 import Review from "../models/review.model.js";
 import cloudinary from "../lib/cloudinary.js";
-import { redis } from "../lib/redis.js";
 
 export const getAllProducts = async (req, res) => {
   try {
@@ -64,23 +63,6 @@ export const getFeaturedProducts = async (req, res) => {
       query.category = new RegExp("^" + category + "$", "i");
     }
 
-    // Try to get from Redis cache
-    try {
-      const cacheKey =
-        category && category !== "all"
-          ? "featured_products_" + category
-          : "featured_products";
-      const cached = await redis.get(cacheKey);
-      if (cached) {
-        return res.json(JSON.parse(cached));
-      }
-    } catch (redisError) {
-      console.log(
-        "Redis get error, falling back to MongoDB:",
-        redisError.message,
-      );
-    }
-
     // if not in redis, fetch from mongodb
     const featuredProducts = await Product.find(query).lean();
 
@@ -119,17 +101,6 @@ export const getFeaturedProducts = async (req, res) => {
       numReviews: reviewMap.get(product._id.toString())?.numReviews || 0,
     }));
 
-    // Try to store in redis for future quick access
-    try {
-      const cacheKey =
-        category && category !== "all"
-          ? "featured_products_" + category
-          : "featured_products";
-      await redis.set(cacheKey, JSON.stringify(productsWithRatings));
-    } catch (redisError) {
-      console.log("Redis set error:", redisError.message);
-    }
-
     res.json(productsWithRatings);
   } catch (error) {
     console.log("Error in getFeaturedProducts controller", error.message);
@@ -158,8 +129,6 @@ export const createProduct = async (req, res) => {
         : "",
       category,
     });
-
-    await updateFeaturedProductsCache();
 
     res.status(201).json(product);
   } catch (error) {
@@ -261,7 +230,6 @@ export const toggleFeaturedProduct = async (req, res) => {
     if (product) {
       product.isFeatured = !product.isFeatured;
       const updatedProduct = await product.save();
-      await updateFeaturedProductsCache();
       res.json(updatedProduct);
     } else {
       res.status(404).json({ message: "Product not found" });
@@ -307,7 +275,6 @@ export const updateProduct = async (req, res) => {
     product.image = cloudinaryResponse?.secure_url || product.image;
 
     const updatedProduct = await product.save();
-    await updateFeaturedProductsCache();
 
     res.json(updatedProduct);
   } catch (error) {
@@ -315,15 +282,6 @@ export const updateProduct = async (req, res) => {
     res.status(500).json({ message: "Server error", error: error.message });
   }
 };
-
-async function updateFeaturedProductsCache() {
-  try {
-    const featuredProducts = await Product.find({ isFeatured: true }).lean();
-    await redis.set("featured_products", JSON.stringify(featuredProducts));
-  } catch (error) {
-    console.log("error in update cache function");
-  }
-}
 
 // @desc    Get products with pagination
 // @route   GET /api/products?page=1&limit=10

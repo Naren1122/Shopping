@@ -3,6 +3,7 @@ import dotenv from "dotenv";
 import cookieParser from "cookie-parser";
 import cors from "cors";
 import { connectDB } from "./lib/db.js";
+import { generalLimiter, authLimiter } from "./middleware/rateLimiter.middleware.js";
 import authRoutes from "./routes/auth.route.js";
 import productRoutes from "./routes/product.route.js";
 import cartRoutes from "./routes/cart.route.js";
@@ -41,10 +42,11 @@ app.use(
   }),
 );
 
-app.use(express.json({ limit: "10mb" })); // allows us to parse incoming requests with JSON payloads
+app.use(express.json({ limit: "10mb" }));
 
 app.use(cookieParser());
-app.use("/api/auth", authRoutes);
+app.use(generalLimiter);
+app.use("/api/auth", authLimiter, authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/coupons", couponRoutes);

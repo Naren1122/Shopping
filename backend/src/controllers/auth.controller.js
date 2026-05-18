@@ -368,14 +368,6 @@ export const changePassword = async (req, res) => {
       });
     }
 
-    // Check if new password is different from current password
-    const isSameAsCurrent = await user.comparePassword(newPassword);
-    if (isSameAsCurrent) {
-      return res.status(400).json({
-        message: "New password must be different from current password",
-      });
-    }
-
     // Validate password length
     if (newPassword.length < 6) {
       return res.status(400).json({
@@ -388,6 +380,14 @@ export const changePassword = async (req, res) => {
 
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // Check if new password is different from current password
+    const isSameAsCurrent = await user.comparePassword(newPassword);
+    if (isSameAsCurrent) {
+      return res.status(400).json({
+        message: "New password must be different from current password",
+      });
     }
 
     // Verify current password
@@ -462,5 +462,76 @@ export const checkAuth = async (req, res) => {
   } catch (error) {
     console.error("Error in checkAuth controller:", error.message);
     return res.status(200).json({ isAuthenticated: false });
+  }
+};
+
+// ============== VENDOR REGISTRATION ==============
+
+export const registerVendor = async (req, res) => {
+  try {
+    const { email, password, name, storeName, storeDescription } = req.body;
+
+    if (!email || !password || !name || !storeName) {
+      return res.status(400).json({ message: "Missing required fields" });
+    }
+
+    const userExists = await User.findOne({ email });
+    if (userExists) {
+      return res.status(400).json({ message: "User already exists" });
+    }
+
+    const user = await User.create({
+      name,
+      email,
+      password,
+      role: "vendor",
+      vendorProfile: {
+        storeName,
+        storeDescription: storeDescription || "",
+        isApproved: false,
+      },
+    });
+
+    const { accessToken, refreshToken } = generateTokens(user._id);
+    setCookies(res, accessToken, refreshToken);
+
+    res.status(201).json({
+      message: "Vendor registration submitted. Awaiting admin approval.",
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      vendorProfile: user.vendorProfile,
+    });
+  } catch (error) {
+    console.log("Error in registerVendor controller", error.message);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ============== UPDATE VENDOR PROFILE ==============
+
+export const updateVendorProfile = async (req, res) => {
+  try {
+    const { storeName, storeDescription } = req.body;
+
+    const user = await User.findById(req.user._id);
+
+    if (!user || user.role !== "vendor") {
+      return res.status(403).json({ message: "Not authorized as vendor" });
+    }
+
+    if (storeName) user.vendorProfile.storeName = storeName;
+    if (storeDescription !== undefined) user.vendorProfile.storeDescription = storeDescription;
+
+    await user.save();
+
+    res.json({
+      message: "Vendor profile updated",
+      vendorProfile: user.vendorProfile,
+    });
+  } catch (error) {
+    console.log("Error in updateVendorProfile", error.message);
+    res.status(500).json({ message: error.message });
   }
 };

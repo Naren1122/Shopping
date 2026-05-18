@@ -33,8 +33,13 @@ const userSchema = new mongoose.Schema(
     ],
     role: {
       type: String,
-      enum: ["customer", "admin"],
+      enum: ["customer", "admin", "vendor"],
       default: "customer",
+    },
+    vendorProfile: {
+      storeName: { type: String },
+      storeDescription: { type: String },
+      isApproved: { type: Boolean, default: false },
     },
     resetPasswordToken: {
       type: String,

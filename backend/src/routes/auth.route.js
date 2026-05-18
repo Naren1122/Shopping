@@ -11,12 +11,15 @@ import {
   resetPassword,
   changePassword,
   checkAuth,
+  registerVendor,
+  updateVendorProfile,
 } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
 router.post("/signup", signup);
+router.post("/vendor/register", registerVendor);
 
 router.post("/login", login);
 
@@ -35,5 +38,8 @@ router.post("/reset-password", resetPassword);
 router.put("/profile", protectRoute, updateProfile);
 router.post("/track-view", protectRoute, trackBrowsingHistory);
 router.post("/change-password", protectRoute, changePassword);
+
+// Vendor profile update
+router.put("/vendor/profile", protectRoute, updateVendorProfile);
 
 export default router;

@@ -15,8 +15,8 @@ const verifySignature = (data, signature, secretKey) => {
   return expectedSignature === signature;
 };
 
-// Hardcoded test credentials for eSewa sandbox - known to work
-const ESEWA_TEST_SECRET_KEY = "8gBm/:&EnhH.1/q";
+// eSewa secret key from environment variables
+const ESEWA_SECRET_KEY = process.env.ESEWA_SECRET_KEY || "";
 
 // @desc    Initiate eSewa payment with proper form parameters
 // @route   POST /api/payments/esewa/initiate
@@ -56,7 +56,7 @@ export const initiateEsewaPayment = async (req, res) => {
       process.env.ESEWA_URL ||
       "https://rc-epay.esewa.com.np/api/epay/main/v2/form";
     const merchantId = process.env.ESEWA_MERCHANT_ID || "EPAYTEST";
-    const secretKey = ESEWA_TEST_SECRET_KEY; // Use hardcoded key
+    const secretKey = ESEWA_SECRET_KEY;
     const frontendUrl = process.env.FRONTEND_URL || "http://localhost:3000";
     const useDemoMode = process.env.ESEWA_DEMO_MODE === "true";
 
@@ -175,63 +175,52 @@ export const esewaSuccess = async (req, res) => {
     total_amount,
     transaction_uuid,
     product_code,
-    signed_field_names,
-    signature,
   } = req.query;
 
   try {
-    // Verify signature if available
-    const secretKey = ESEWA_TEST_SECRET_KEY;
-    if (signature && signed_field_names && secretKey) {
-      // Build signature data with field names like request
-      const fields = String(signed_field_names).split(",");
-      const dataString = fields
-        .map((field) => {
-          const fieldName = field.trim();
-          switch (fieldName) {
-            case "transaction_code":
-              return `transaction_code=${transaction_code}`;
-            case "status":
-              return `status=${status}`;
-            case "total_amount":
-              return `total_amount=${total_amount}`;
-            case "transaction_uuid":
-              return `transaction_uuid=${transaction_uuid}`;
-            case "product_code":
-              return `product_code=${product_code}`;
-            case "signed_field_names":
-              return `signed_field_names=${signed_field_names}`;
-            default:
-              return "";
-          }
-        })
-        .filter((f) => f)
-        .join(",");
-
-      const isValid = verifySignature(dataString, String(signature), secretKey);
-      console.log(
-        "[eSewa] Signature verification:",
-        isValid ? "SUCCESS" : "FAILED",
-      );
-
-      if (!isValid) {
-        return res.redirect(
-          `${process.env.FRONTEND_URL}/payment-failed?reason=invalid_signature`,
-        );
-      }
-    }
-
-    console.log("[eSewa] Payment success:", {
+    console.log("[eSewa] Payment success callback:", {
       transaction_code,
       status,
       total_amount,
       transaction_uuid,
+      product_code,
     });
 
-    // Redirect to frontend success page
-    res.redirect(
-      `${process.env.FRONTEND_URL}/payment-success?status=${status}&transactionId=${transaction_code}`,
-    );
+    // Verify with status check API (recommended per latest eSewa docs)
+    const esewaStatusUrl = "https://rc-epay.esewa.com.np/api/epay/transaction/status/";
+    const params = new URLSearchParams({
+      product_code: product_code || process.env.ESEWA_MERCHANT_ID || "EPAYTEST",
+      total_amount: total_amount,
+      transaction_uuid: transaction_uuid,
+    });
+
+    const statusResponse = await fetch(`${esewaStatusUrl}?${params}`);
+    const statusData = await statusResponse.json();
+
+    console.log("[eSewa] Status check response:", statusData);
+
+    if (statusData.status === "COMPLETE") {
+      // Update payment and order
+      const order = await Order.findOne({ _id: transaction_uuid.split("-")[0] });
+      if (order) {
+        order.paymentStatus = "paid";
+        await order.save();
+      }
+      const payment = await Payment.findOne({ order: order?._id });
+      if (payment) {
+        payment.status = "completed";
+        payment.transactionId = transaction_code;
+        await payment.save();
+      }
+
+      res.redirect(
+        `${process.env.FRONTEND_URL}/payment-success?status=COMPLETE&transactionId=${transaction_code}`,
+      );
+    } else {
+      res.redirect(
+        `${process.env.FRONTEND_URL}/payment-failed?reason=${statusData.status || "pending"}`,
+      );
+    }
   } catch (error) {
     console.error("Error processing eSewa success callback:", error);
     res.redirect(
@@ -239,6 +228,7 @@ export const esewaSuccess = async (req, res) => {
     );
   }
 };
+
 
 // @desc    Handle payment failure callback from eSewa
 // @route   GET /api/payments/esewa/failure
