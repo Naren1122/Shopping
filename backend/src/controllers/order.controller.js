@@ -1,4 +1,5 @@
 import Order from "../models/order.model.js";
+import Product from "../models/product.model.js";
 
 // @desc    Create new order
 // @route   POST /api/orders
@@ -7,9 +8,20 @@ export const createOrder = async (req, res) => {
   try {
     const { orderItems, shippingAddress, paymentMethod, totalPrice } = req.body;
 
+    // Populate vendor for each order item
+    const enrichedOrderItems = await Promise.all(
+      orderItems.map(async (item) => {
+        const product = await Product.findById(item.product).select("vendor");
+        return {
+          ...item,
+          vendor: product?.vendor || null,
+        };
+      })
+    );
+
     const order = await Order.create({
       user: req.user._id,
-      orderItems,
+      orderItems: enrichedOrderItems,
       shippingAddress,
       paymentMethod,
       totalPrice,
@@ -124,6 +136,31 @@ export const updateOrderStatus = async (req, res) => {
     // Set deliveredAt when order is delivered
     if (orderStatus === "delivered") {
       order.deliveredAt = new Date();
+
+      // Calculate payouts per vendor
+      const vendorPayouts = {};
+
+      for (const item of order.orderItems) {
+        if (item.vendor) {
+          if (!vendorPayouts[item.vendor]) {
+            vendorPayouts[item.vendor] = { gross: 0, commissionRate: 10 };
+          }
+          vendorPayouts[item.vendor].gross += item.price * item.quantity;
+        }
+      }
+
+      // Create payout records
+      order.payouts = Object.entries(vendorPayouts).map(([vendorId, data]) => {
+        const commission = (data.gross * data.commissionRate) / 100;
+        const netAmount = data.gross - commission;
+
+        return {
+          vendor: vendorId,
+          amount: netAmount,
+          commission: commission,
+          status: "pending",
+        };
+      });
     }
 
     await order.save();
@@ -199,6 +236,26 @@ export const deleteOrder = async (req, res) => {
 
     await Order.findByIdAndDelete(req.params.id);
     res.json({ message: "Order deleted successfully" });
+  } catch (error) {
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// @desc    Get orders containing vendor's products
+// @route   GET /api/orders/vendor
+// @access  Private/Vendor
+export const getVendorOrders = async (req, res) => {
+  try {
+    const vendorId = req.user._id;
+
+    // Find orders where at least one item belongs to this vendor
+    const orders = await Order.find({
+      "orderItems.vendor": vendorId,
+    })
+      .sort({ createdAt: -1 })
+      .populate("user", "name email");
+
+    res.json(orders);
   } catch (error) {
     res.status(500).json({ message: error.message });
   }

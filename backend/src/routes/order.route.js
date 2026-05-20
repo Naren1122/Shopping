@@ -7,8 +7,9 @@ import {
   getAllOrders,
   cancelOrder,
   deleteOrder,
+  getVendorOrders,
 } from "../controllers/order.controller.js";
-import { protectRoute, adminRoute } from "../middleware/auth.middleware.js";
+import { protectRoute, adminRoute, vendorRoute } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
@@ -22,5 +23,8 @@ router.delete("/:id", protectRoute, deleteOrder);
 router.post("/", protectRoute, createOrder);
 router.get("/", protectRoute, getUserOrders);
 router.get("/:id", protectRoute, getOrderById);
+
+// Vendor routes
+router.get("/vendor/my-orders", protectRoute, vendorRoute, getVendorOrders);
 
 export default router;

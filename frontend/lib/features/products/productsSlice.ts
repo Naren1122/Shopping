@@ -57,7 +57,7 @@ const getToken = () => {
 export const fetchAllProducts = createAsyncThunk(
   "products/fetchAll",
   async (
-    params: { page?: number; limit?: number } = {},
+    params: { page?: number; limit?: number; vendorId?: string } = {},
     { rejectWithValue },
   ) => {
     try {
@@ -65,6 +65,7 @@ export const fetchAllProducts = createAsyncThunk(
       const queryParams = new URLSearchParams();
       if (params.page) queryParams.append("page", params.page.toString());
       if (params.limit) queryParams.append("limit", params.limit.toString());
+      if (params.vendorId) queryParams.append("vendorId", params.vendorId);
 
       const response = await fetch(
         `/api/products?${queryParams.toString()}`,

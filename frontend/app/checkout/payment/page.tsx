@@ -37,6 +37,7 @@ interface OrderItem {
   price: number;
   image: string;
   quantity: number;
+  vendor?: string;
 }
 
 export default function CheckoutPaymentPage() {
@@ -57,6 +58,23 @@ export default function CheckoutPaymentPage() {
   );
   const shipping = subtotal > 1000 ? 0 : 100; // Free shipping above Rs. 1000
   const total = subtotal + shipping;
+
+  // Group items by vendor for multi-vendor display
+  const groupedByVendor = orderItems.reduce((groups, item) => {
+    const vendorKey = item.vendor || "unknown";
+    if (!groups[vendorKey]) {
+      groups[vendorKey] = [];
+    }
+    groups[vendorKey].push(item);
+    return groups;
+  }, {} as Record<string, OrderItem[]>);
+
+  // Calculate per-vendor subtotals
+  const vendorSubtotals = Object.entries(groupedByVendor).map(([vendorId, items]) => ({
+    vendorId,
+    subtotal: items.reduce((sum, item) => sum + item.price * item.quantity, 0),
+    items,
+  }));
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -389,26 +407,36 @@ export default function CheckoutPaymentPage() {
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                {/* Order Items */}
-                <div className="space-y-3 max-h-64 overflow-y-auto">
-                  {orderItems.map((item, index) => (
-                    <div key={`${item._id}-${index}`} className="flex gap-3">
-                      <div className="w-16 h-16 rounded-md bg-muted overflow-hidden flex-shrink-0">
-                        {item.image && (
-                          <img
-                            src={item.image}
-                            alt={item.name}
-                            className="w-full h-full object-cover"
-                          />
-                        )}
+                {/* Order Items - Grouped by Vendor */}
+                <div className="space-y-4 max-h-72 overflow-y-auto">
+                  {vendorSubtotals.map(({ vendorId, items, subtotal }, idx) => (
+                    <div key={idx} className="border rounded-lg p-3">
+                      <div className="flex justify-between items-center mb-2">
+                        <p className="text-xs font-semibold text-muted-foreground">
+                          From Vendor {vendorId.slice(-6)}
+                        </p>
+                        <p className="text-sm font-medium">Rs. {subtotal}</p>
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {item.name}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          Rs. {item.price.toLocaleString()} × {item.quantity}
-                        </p>
+                      <div className="space-y-3">
+                        {items.map((item, index) => (
+                          <div key={`${item._id}-${index}`} className="flex gap-3">
+                            <div className="w-14 h-14 rounded-md bg-muted overflow-hidden flex-shrink-0">
+                              {item.image && (
+                                <img
+                                  src={item.image}
+                                  alt={item.name}
+                                  className="w-full h-full object-cover"
+                                />
+                              )}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-medium truncate">{item.name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                Rs. {item.price.toLocaleString()} × {item.quantity}
+                              </p>
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
                   ))}

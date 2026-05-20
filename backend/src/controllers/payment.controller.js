@@ -47,9 +47,8 @@ export const initiateEsewaPayment = async (req, res) => {
       status: "pending",
     });
 
-    // Generate unique transaction UUID (alphanumeric only, no special chars except hyphen)
-    const timestamp = Date.now();
-    const transactionUuid = `ORD${timestamp}`;
+    // Generate unique transaction UUID using order ID (consistent format)
+    const transactionUuid = `${order._id}-${Date.now()}`;
 
     // Get eSewa credentials
     const esewaUrl =
@@ -188,9 +187,27 @@ export const esewaSuccess = async (req, res) => {
 
     // Verify with status check API (recommended per latest eSewa docs)
     const esewaStatusUrl = "https://rc-epay.esewa.com.np/api/epay/transaction/status/";
+
+    // Get total_amount from order if not provided in query (fixes 'undefined' error)
+    let finalTotalAmount = total_amount;
+    if (!finalTotalAmount && transaction_uuid) {
+      const orderId = transaction_uuid.split("-")[0];
+      const order = await Order.findById(orderId);
+      if (order) {
+        finalTotalAmount = order.totalPrice;
+      }
+    }
+
+    // Final safety check
+    if (!finalTotalAmount) {
+      return res.redirect(
+        `${process.env.FRONTEND_URL}/payment-failed?reason=missing_amount`,
+      );
+    }
+
     const params = new URLSearchParams({
       product_code: product_code || process.env.ESEWA_MERCHANT_ID || "EPAYTEST",
-      total_amount: total_amount,
+      total_amount: finalTotalAmount,
       transaction_uuid: transaction_uuid,
     });
 
@@ -244,6 +261,13 @@ export const esewaFailure = async (req, res) => {
   });
 
   try {
+    // Delete order on payment failure (cleaner flow)
+    if (transaction_uuid) {
+      const orderId = transaction_uuid.split("-")[0];
+      await Order.findByIdAndDelete(orderId);
+      console.log(`[eSewa] Order ${orderId} deleted due to payment failure`);
+    }
+
     // Redirect to frontend failure page
     res.redirect(
       `${process.env.FRONTEND_URL}/payment-failed?reason=${error_message || status || "cancelled"}`,

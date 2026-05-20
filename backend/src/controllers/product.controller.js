@@ -8,8 +8,13 @@ export const getAllProducts = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const products = await Product.find({}).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
-    const total = await Product.countDocuments({});
+    const filter = {};
+    if (req.query.vendorId) {
+      filter.vendor = req.query.vendorId;
+    }
+
+    const products = await Product.find(filter).sort({ createdAt: -1 }).skip(skip).limit(limit).lean();
+    const total = await Product.countDocuments(filter);
 
     // Get review stats for each product
     const productIds = products.map((p) => p._id);
@@ -110,6 +115,13 @@ export const getFeaturedProducts = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
+    // Extra security: Block unapproved vendors
+    if (req.user.role === "vendor" && !req.user.vendorProfile?.isApproved) {
+      return res.status(403).json({ 
+        message: "Your vendor account is not approved yet" 
+      });
+    }
+
     const { name, description, price, image, category } = req.body;
 
     let cloudinaryResponse = null;
@@ -128,6 +140,7 @@ export const createProduct = async (req, res) => {
         ? cloudinaryResponse.secure_url
         : "",
       category,
+      vendor: req.user._id, // Set from authenticated user (vendor or admin)
     });
 
     res.status(201).json(product);
@@ -143,6 +156,11 @@ export const deleteProduct = async (req, res) => {
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Ownership check for vendors
+    if (req.user.role === "vendor" && product.vendor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to delete this product" });
     }
 
     if (product.image) {
@@ -247,6 +265,11 @@ export const updateProduct = async (req, res) => {
 
     if (!product) {
       return res.status(404).json({ message: "Product not found" });
+    }
+
+    // Ownership check for vendors
+    if (req.user.role === "vendor" && product.vendor.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ message: "Not authorized to update this product" });
     }
 
     let cloudinaryResponse = null;

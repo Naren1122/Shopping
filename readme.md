@@ -50,6 +50,52 @@ Bazar is a full-featured e-commerce platform specifically designed for the Nepal
 - 📱 **Responsive Design** - Works on desktop, tablet, and mobile
 - 📊 **Admin Dashboard** - Comprehensive analytics and product management
 
+<br>
+
+## 🎥 Demo & 🖼️ Screenshots
+
+<p align="center">
+
+  <a href="https://youtu.be/-wvtIC3Oc5s" target="_blank">
+
+    <img src="https://img.youtube.com/vi/-wvtIC3Oc5s/maxresdefault.jpg" alt="Demo Video Thumbnail" width="720" style="border-radius:12px;" />
+
+  </a>
+
+</p>
+
+<p align="center">
+
+  ▶️ <a href="https://youtu.be/-wvtIC3Oc5s" target="_blank">Watch the full demo on YouTube</a>
+
+</p>
+
+<br>
+
+### 📸 Dashboard
+
+<p align="center">
+
+  <img src="img/dashboard.jpg" alt="Admin Dashboard" width="720" style="border-radius:12px; border:1px solid #e5e7eb;" />
+
+</p>
+
+*Beautifully designed Admin Dashboard with sales analytics, order management, and product overview.*
+
+<br>
+
+### 💳 eSewa Payment Integration
+
+<p align="center">
+
+  <img src="img/esewa.jpg" alt="eSewa Payment Integration" width="720" style="border-radius:12px; border:1px solid #e5e7eb;" />
+
+</p>
+
+*Seamless eSewa payment gateway integration — Nepal's most trusted digital wallet.*
+
+<br>
+
 ---
 
 ## 🛠️ Technology Stack

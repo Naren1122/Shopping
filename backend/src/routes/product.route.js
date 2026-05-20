@@ -11,7 +11,7 @@ import {
   searchProducts,
   updateProduct,
 } from "../controllers/product.controller.js";
-import { adminRoute, protectRoute } from "../middleware/auth.middleware.js";
+import { adminRoute, protectRoute, vendorRoute } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
@@ -23,9 +23,9 @@ router.get("/recommendations", getRecommendedProducts);
 router.get("/:id", getProductById); // Get single product by ID
 
 // Admin routes (protected)
-router.post("/", protectRoute, adminRoute, createProduct);
-router.put("/:id", protectRoute, adminRoute, updateProduct);
+router.post("/", protectRoute, vendorRoute, createProduct);
+router.put("/:id", protectRoute, vendorRoute, updateProduct);
 router.patch("/:id", protectRoute, adminRoute, toggleFeaturedProduct);
-router.delete("/:id", protectRoute, adminRoute, deleteProduct);
+router.delete("/:id", protectRoute, vendorRoute, deleteProduct);
 
 export default router;

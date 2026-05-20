@@ -13,8 +13,9 @@ import {
   checkAuth,
   registerVendor,
   updateVendorProfile,
+  approveVendor,
 } from "../controllers/auth.controller.js";
-import { protectRoute } from "../middleware/auth.middleware.js";
+import { protectRoute, adminRoute } from "../middleware/auth.middleware.js";
 
 const router = express.Router();
 
@@ -41,5 +42,8 @@ router.post("/change-password", protectRoute, changePassword);
 
 // Vendor profile update
 router.put("/vendor/profile", protectRoute, updateVendorProfile);
+
+// Admin: Approve or reject vendor
+router.patch("/vendor/:id/approve", protectRoute, adminRoute, approveVendor);
 
 export default router;

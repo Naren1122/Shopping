@@ -229,15 +229,16 @@ export const updateQuantity = async (req, res) => {
         .map((item) => {
           const product = productMap.get(item.product.toString());
           if (!product) return null;
-          return {
-            _id: product._id,
-            name: product.name,
-            description: product.description,
-            price: product.price,
-            image: product.image,
-            category: product.category,
-            quantity: item.quantity,
-          };
+        return {
+          _id: product._id,
+          name: product.name,
+          description: product.description,
+          price: product.price,
+          image: product.image,
+          category: product.category,
+          quantity: item.quantity,
+          vendor: product.vendor,
+        };
         })
         .filter(Boolean);
 

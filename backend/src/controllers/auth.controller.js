@@ -68,6 +68,9 @@ export const signup = async (req, res) => {
 
 export const login = async (req, res) => {
   try {
+    if (!req.body) {
+      return res.status(400).json({ message: "Request body is missing" });
+    }
     const { email, password } = req.body;
     const user = await User.findOne({ email });
 
@@ -469,6 +472,9 @@ export const checkAuth = async (req, res) => {
 
 export const registerVendor = async (req, res) => {
   try {
+    if (!req.body) {
+      return res.status(400).json({ message: "Request body is missing" });
+    }
     const { email, password, name, storeName, storeDescription } = req.body;
 
     if (!email || !password || !name || !storeName) {
@@ -532,6 +538,32 @@ export const updateVendorProfile = async (req, res) => {
     });
   } catch (error) {
     console.log("Error in updateVendorProfile", error.message);
+    res.status(500).json({ message: error.message });
+  }
+};
+
+// ============== APPROVE / REJECT VENDOR ==============
+
+export const approveVendor = async (req, res) => {
+  try {
+    const { isApproved } = req.body;
+    const { id } = req.params;
+
+    const user = await User.findById(id);
+
+    if (!user || user.role !== "vendor") {
+      return res.status(404).json({ message: "Vendor not found" });
+    }
+
+    user.vendorProfile.isApproved = isApproved;
+    await user.save();
+
+    res.json({
+      message: `Vendor ${isApproved ? "approved" : "rejected"} successfully`,
+      vendor: user,
+    });
+  } catch (error) {
+    console.log("Error in approveVendor", error.message);
     res.status(500).json({ message: error.message });
   }
 };

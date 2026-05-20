@@ -50,7 +50,31 @@ export const protectRoute = async (req, res, next) => {
 export const adminRoute = (req, res, next) => {
   if (req.user && req.user.role === "admin") {
     next();
+  } else if (req.user && req.user.role === "vendor") {
+    return res.status(403).json({ 
+      message: "Access denied - Vendors cannot access admin features" 
+    });
   } else {
     return res.status(403).json({ message: "Access denied - Admin only" });
+  }
+};
+
+export const vendorRoute = (req, res, next) => {
+  if (req.user && (req.user.role === "vendor" || req.user.role === "admin")) {
+    // Allow admins to bypass approval check
+    if (req.user.role === "admin") {
+      return next();
+    }
+
+    // Check if vendor is approved
+    if (req.user.vendorProfile?.isApproved) {
+      return next();
+    }
+
+    return res.status(403).json({ 
+      message: "Access denied - Your vendor account is pending approval" 
+    });
+  } else {
+    return res.status(403).json({ message: "Access denied - Vendor only" });
   }
 };

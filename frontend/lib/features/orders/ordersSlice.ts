@@ -7,6 +7,7 @@ interface OrderItem {
   price: number;
   quantity: number;
   image: string;
+  vendor?: string;
 }
 
 interface ShippingAddress {
