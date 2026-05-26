@@ -81,6 +81,30 @@ Bazar is a full-featured e-commerce platform specifically designed for the Nepal
 - ✅ **Featured Toggle** - Highlight specific products on homepage
 - ✅ **Order Management** - View and update order statuses
 
+## 🔒 Security Features
+
+- **Rate Limiting** - Protection against abuse
+- **Hybrid Semantic Search** - For better product searching experience
+- **JWT Authentication** - Access and refresh token mechanism
+- **HTTP-only Cookies** - Secure token storage
+- **Password Hashing** - bcryptjs for secure password storage
+- **Protected Routes** - Middleware-based route protection
+- **CORS Configuration** - Controlled cross-origin access
+- **Input Validation** - Zod schema validation
+
+
+---
+
+## 🚀 Performance Optimization
+
+- **Redis Caching** - Cached featured products and recommendations
+- **MongoDB Indexing** - Optimized queries for fast retrieval
+- **Pagination** - Efficient handling of large datasets
+- **Cloudinary CDN** - Fast image delivery
+- **Server-Side Rendering** - Next.js SSR for improved SEO and performance
+- **Code Splitting** - Automatic code splitting in Next.js
+
+  
 ### Notifications
 
 - ✅ **Email Notifications** - Order confirmation, status updates via Nodemailer
