@@ -134,13 +134,17 @@ export const fetchFeaturedProducts = createAsyncThunk(
   },
 );
 
-// Search products (public)
+// Search products (public) - supports semantic search
 export const searchProducts = createAsyncThunk(
   "products/search",
-  async (query: string, { rejectWithValue }) => {
+  async (params: { query: string; semantic?: boolean; limit?: number } = {} as any, { rejectWithValue }) => {
     try {
+      const { query, semantic = false, limit = 10 } = typeof params === "string" ? { query: params } : params;
+      const queryParams = new URLSearchParams({ q: query, limit: limit.toString() });
+      if (semantic) queryParams.append("semantic", "true");
+      
       const response = await fetch(
-        `/api/products/search?q=${encodeURIComponent(query)}`,
+        `/api/products/search?${queryParams.toString()}`,
         {
           credentials: "include",
         },
@@ -373,7 +377,7 @@ const productsSlice = createSlice({
       .addCase(fetchAllProducts.fulfilled, (state, action) => {
         state.isLoading = false;
         state.products = action.payload.products;
-        state.total = action.payload.total;https://shopping-1-r5zt.onrender.com/
+        state.total = action.payload.total;
         state.page = action.payload.page;
         state.pages = action.payload.pages;
       })

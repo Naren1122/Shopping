@@ -1,5 +1,20 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## AI-Powered Semantic Search
+
+**Search Modes:**
+- **Keyword Search**: Traditional text matching in product names
+- **AI Search**: Semantic search with relevance ranking (toggle in Navbar)
+
+**Usage:**
+- AI Search: `/products?search=query&semantic=true`
+- Keyword Search: `/products?search=query`
+
+**Features:**
+- Toggle between AI and keyword modes in Navbar search dropdown
+- Search results are ranked by semantic similarity in AI mode
+- No external API key required (uses local hash-based embeddings)
+
 ## Getting Started
 
 First, run the development server:

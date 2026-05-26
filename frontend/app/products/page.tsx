@@ -21,41 +21,38 @@ import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import {
   fetchAllProducts,
   fetchFeaturedProducts,
+  searchProducts,
 } from "@/lib/features/products/productsSlice";
 
 function ProductsContent() {
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
 
-  const { products, featuredProducts, isLoading, total, page, pages } =
+  const { products, featuredProducts, searchResults, isLoading, total, page, pages } =
     useAppSelector((state) => state.products);
 
-  // Check if featured param exists in URL
-  const featuredParam = searchParams.get("featured");
-  const initialShowFeatured = featuredParam === "true";
+  const searchQuery = searchParams.get("search");
+  const semantic = searchParams.get("semantic") === "true";
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [showFeaturedOnly, setShowFeaturedOnly] = useState(initialShowFeatured);
+  const [showFeaturedOnly, setShowFeaturedOnly] = useState(false);
   const [priceFilter, setPriceFilter] = useState<[number, number] | null>(null);
 
-  // Use featured products when filter is active
-  const displayedProducts = showFeaturedOnly ? featuredProducts : products;
+  useEffect(() => {
+    if (searchQuery) {
+      dispatch(searchProducts({ query: searchQuery, semantic }));
+    } else {
+      dispatch(fetchAllProducts({ page: 1, limit: 8 }));
+    }
+  }, [dispatch, searchQuery, semantic]);
 
-  // Apply price filter client-side
+  const displayedProducts = searchQuery ? searchResults : (showFeaturedOnly ? featuredProducts : products);
+
   const filteredByPrice = priceFilter
     ? displayedProducts.filter(
         (p) => p.price >= priceFilter[0] && p.price <= priceFilter[1],
       )
     : displayedProducts;
-
-  // Fetch products on mount and when filters change
-  useEffect(() => {
-    if (showFeaturedOnly) {
-      dispatch(fetchFeaturedProducts(""));
-    } else {
-      dispatch(fetchAllProducts({ page: 1, limit: 8 }));
-    }
-  }, [dispatch, showFeaturedOnly]);
 
   const clearFilters = () => {
     setShowFeaturedOnly(false);
@@ -73,7 +70,7 @@ function ProductsContent() {
     }
   };
 
-  const hasFilters = showFeaturedOnly;
+  const hasFilters = showFeaturedOnly || searchQuery;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -134,7 +131,9 @@ function ProductsContent() {
                 ? "Loading..."
                 : priceFilter
                   ? `${filteredByPrice.length} products found`
-                  : `${total} products found`}
+                  : searchQuery
+                    ? `${searchResults.length} results found`
+                    : `${total} products found`}
             </p>
           </div>
 
@@ -156,16 +155,20 @@ function ProductsContent() {
                 <ProductCard key={product._id} product={product} />
               ))}
             </div>
-          ) : (
-            <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border">
-              <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
-                <Search className="h-12 w-12 text-teal-500" />
-              </div>
-              <h3 className="text-xl font-bold mb-3">No products found</h3>
-              <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                No products available yet. Check back soon!
-              </p>
-            </div>
+            ) : (
+             <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border">
+               <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
+                 <Search className="h-12 w-12 text-teal-500" />
+               </div>
+               <h3 className="text-xl font-bold mb-3">
+                 {searchQuery ? "No search results found" : "No products found"}
+               </h3>
+               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
+                 {searchQuery
+                   ? "Try a different search term or remove filters."
+                   : "No products available yet. Check back soon!"}
+               </p>
+             </div>
           )}
 
           {/* Pagination - Always show for testing */}

@@ -35,6 +35,7 @@ export function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [useSemantic, setUseSemantic] = useState(true);
 
   // Handle scroll effect
   useEffect(() => {
@@ -49,7 +50,7 @@ export function Navbar() {
   const handleSearch = async (query: string) => {
     setSearchQuery(query);
     if (query.length > 2) {
-      const result = await dispatch(searchProducts(query));
+      const result = await dispatch(searchProducts({ query, semantic: useSemantic }));
       if (searchProducts.fulfilled.match(result)) {
         setSearchResults(result.payload);
         setShowResults(true);
@@ -64,7 +65,10 @@ export function Navbar() {
     e.preventDefault();
     if (searchQuery.trim()) {
       setShowResults(false);
-      router.push(`/products?search=${encodeURIComponent(searchQuery)}`);
+      const searchUrl = useSemantic 
+        ? `/products?search=${encodeURIComponent(searchQuery)}&semantic=true`
+        : `/products?search=${encodeURIComponent(searchQuery)}`;
+      router.push(searchUrl);
     }
   };
 
@@ -107,44 +111,57 @@ export function Navbar() {
                 />
               </div>
             </form>
-            {/* Search Results Dropdown */}
-            {showResults && searchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-lg shadow-lg overflow-hidden">
-                {searchResults.slice(0, 5).map((product: Product) => (
-                  <Link
-                    key={product._id}
-                    href={`/products/${product._id}`}
-                    className="flex items-center gap-3 p-3 hover:bg-muted"
-                    onClick={() => setShowResults(false)}
-                  >
-                    <div className="w-20 h-10 rounded bg-muted overflow-hidden shrink-0">
-                      {product.image && (
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      )}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">
-                        {product.name}
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Rs. {product.price.toLocaleString()}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-                <Link
-                  href={`/products?search=${encodeURIComponent(searchQuery)}`}
-                  className="block p-3 text-center text-sm text-primary hover:bg-muted"
-                  onClick={() => setShowResults(false)}
-                >
-                  View all results
-                </Link>
-              </div>
-            )}
+{/* Search Results Dropdown */}
+             {showResults && searchResults.length > 0 && (
+               <div className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-lg shadow-lg overflow-hidden">
+                 <div className="flex items-center justify-between px-3 py-1 border-b">
+                   <p className="text-xs text-muted-foreground">
+                     {useSemantic ? "🤖 AI Search" : "Keyword Search"}
+                   </p>
+                   <Button
+                     variant="ghost"
+                     size="sm"
+                     className="h-5 text-xs"
+                     onClick={() => setUseSemantic(!useSemantic)}
+                   >
+                     {useSemantic ? "Keyword" : "AI"}
+                   </Button>
+                 </div>
+                 {searchResults.slice(0, 5).map((product: Product) => (
+                   <Link
+                     key={product._id}
+                     href={`/products/${product._id}`}
+                     className="flex items-center gap-3 p-3 hover:bg-muted"
+                     onClick={() => setShowResults(false)}
+                   >
+                     <div className="w-20 h-10 rounded bg-muted overflow-hidden shrink-0">
+                       {product.image && (
+                         <img
+                           src={product.image}
+                           alt={product.name}
+                           className="w-full h-full object-cover"
+                         />
+                       )}
+                     </div>
+                     <div className="flex-1 min-w-0">
+                       <p className="font-medium text-sm truncate">
+                         {product.name}
+                       </p>
+                       <p className="text-xs text-muted-foreground">
+                         Rs. {product.price.toLocaleString()}
+                       </p>
+                     </div>
+                   </Link>
+                 ))}
+                 <Link
+                   href={`/products?search=${encodeURIComponent(searchQuery)}&semantic=${useSemantic}`}
+                   className="block p-3 text-center text-sm text-primary hover:bg-muted"
+                   onClick={() => setShowResults(false)}
+                 >
+                   View all results
+                 </Link>
+               </div>
+             )}
           </div>
 
           {/* Actions */}
@@ -261,21 +278,21 @@ export function Navbar() {
           </div>
         </div>
 
-        {/* Mobile Search */}
-        <div className="md:hidden mt-3">
-          <form onSubmit={handleSearchSubmit}>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="search"
-                placeholder="Search products..."
-                className="w-full pl-10 h-10 rounded-full border border-gray-300"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-              />
-            </div>
-          </form>
-        </div>
+{/* Mobile Search */}
+         <div className="md:hidden mt-3">
+           <form onSubmit={handleSearchSubmit}>
+             <div className="relative">
+               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+               <Input
+                 type="search"
+                 placeholder="Search products..."
+                 className="w-full pl-10 h-10 rounded-full border border-gray-300"
+                 value={searchQuery}
+                 onChange={(e) => handleSearch(e.target.value)}
+               />
+             </div>
+           </form>
+         </div>
 
         {/* Mobile Menu */}
         {isMobileMenuOpen && (

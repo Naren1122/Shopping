@@ -1,6 +1,7 @@
 import Product from "../models/product.model.js";
 import Review from "../models/review.model.js";
 import cloudinary from "../lib/cloudinary.js";
+import { generateEmbedding } from "../services/embedding.service.js";
 
 export const getAllProducts = async (req, res) => {
   try {
@@ -115,7 +116,6 @@ export const getFeaturedProducts = async (req, res) => {
 
 export const createProduct = async (req, res) => {
   try {
-    // Extra security: Block unapproved vendors
     if (req.user.role === "vendor" && !req.user.vendorProfile?.isApproved) {
       return res.status(403).json({ 
         message: "Your vendor account is not approved yet" 
@@ -132,6 +132,8 @@ export const createProduct = async (req, res) => {
       });
     }
 
+    const embedding = generateEmbedding(`${name} ${description} ${category}`);
+
     const product = await Product.create({
       name,
       description,
@@ -140,7 +142,8 @@ export const createProduct = async (req, res) => {
         ? cloudinaryResponse.secure_url
         : "",
       category,
-      vendor: req.user._id, // Set from authenticated user (vendor or admin)
+      vendor: req.user._id,
+      embedding,
     });
 
     res.status(201).json(product);
@@ -267,16 +270,13 @@ export const updateProduct = async (req, res) => {
       return res.status(404).json({ message: "Product not found" });
     }
 
-    // Ownership check for vendors
     if (req.user.role === "vendor" && product.vendor.toString() !== req.user._id.toString()) {
       return res.status(403).json({ message: "Not authorized to update this product" });
     }
 
     let cloudinaryResponse = null;
 
-    // Only upload new image if provided and different from current
     if (image && image !== product.image) {
-      // Delete old image
       if (product.image) {
         const publicId = product.image.split("/").pop().split(".")[0];
         try {
@@ -285,10 +285,17 @@ export const updateProduct = async (req, res) => {
           console.log("error deleting old image", error);
         }
       }
-      // Upload new image
       cloudinaryResponse = await cloudinary.uploader.upload(image, {
         folder: "products",
       });
+    }
+
+    const needsEmbeddingUpdate = name || description || category;
+    if (needsEmbeddingUpdate) {
+      const updatedName = name || product.name;
+      const updatedDesc = description || product.description;
+      const updatedCat = category || product.category;
+      product.embedding = generateEmbedding(`${updatedName} ${updatedDesc} ${updatedCat}`);
     }
 
     product.name = name || product.name;
@@ -361,18 +368,31 @@ export const getProductsWithPagination = async (req, res) => {
   }
 };
 
-// @desc    Search products by name
-// @route   GET /api/products/search?q=keyword
+// @desc    Search products by name or semantic search
+// @route   GET /api/products/search?q=keyword&semantic=true
 // @access  Public
 export const searchProducts = async (req, res) => {
   try {
-    const { q } = req.query;
+    const { q, semantic = false, limit = 10 } = req.query;
 
-    const products = await Product.find({
-      name: { $regex: q, $options: "i" },
-    }).lean();
+    let products;
 
-    // Get review stats for each product
+    if (semantic === "true" || semantic === true) {
+      const semanticResults = await import("../services/embedding.service.js").then(m => m.semanticSearch(q, parseInt(limit)));
+      
+      if (semanticResults.length > 0) {
+        products = semanticResults;
+      } else {
+        products = await Product.find({
+          name: { $regex: q, $options: "i" },
+        }).limit(parseInt(limit)).lean();
+      }
+    } else {
+      products = await Product.find({
+        name: { $regex: q, $options: "i" },
+      }).lean();
+    }
+
     const productIds = products.map((p) => p._id);
     const reviewStats = await Review.aggregate([
       { $match: { product: { $in: productIds } } },
@@ -385,7 +405,6 @@ export const searchProducts = async (req, res) => {
       },
     ]);
 
-    // Create a map for quick lookup
     const reviewMap = new Map(
       reviewStats.map((r) => [
         r._id.toString(),
@@ -396,7 +415,6 @@ export const searchProducts = async (req, res) => {
       ]),
     );
 
-    // Add rating info to each product
     const productsWithRatings = products.map((product) => ({
       ...product,
       averageRating: reviewMap.get(product._id.toString())?.averageRating || 0,
