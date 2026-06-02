@@ -21,6 +21,9 @@ import { Footer } from "@/components/Footer";
 import { useAppSelector, useAppDispatch } from "@/lib/hooks";
 import { clearCartItems } from "@/lib/features/cart/cartSlice";
 
+// API URL for backend
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 interface Address {
   fullName: string;
   address: string;
@@ -107,20 +110,20 @@ export default function CheckoutPaymentPage() {
         image: item.image,
       }));
 
-      // Create order
-      const orderResponse = await fetch("http://localhost:5000/api/orders", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          orderItems: orderItemsPayload,
-          shippingAddress: selectedAddress,
-          paymentMethod: paymentMethod,
-          totalPrice: total,
-        }),
-      });
+// Create order
+       const orderResponse = await fetch(`${API_URL}/orders`, {
+         method: "POST",
+         headers: {
+           "Content-Type": "application/json",
+           Authorization: `Bearer ${token}`,
+         },
+         body: JSON.stringify({
+           orderItems: orderItemsPayload,
+           shippingAddress: selectedAddress,
+           paymentMethod: paymentMethod,
+           totalPrice: total,
+         }),
+       });
 
       if (!orderResponse.ok) {
         const errorData = await orderResponse.json();
@@ -138,19 +141,19 @@ export default function CheckoutPaymentPage() {
 
         router.push(`/payment-success?orderId=${order._id}`);
       } else {
-        // eSewa - submit form to eSewa with proper parameters
-        try {
-          const paymentResponse = await fetch(
-            "http://localhost:5000/api/payments/esewa/initiate",
-            {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${token}`,
-              },
-              body: JSON.stringify({ orderId: order._id }),
-            },
-          );
+// eSewa - submit form to eSewa with proper parameters
+         try {
+           const paymentResponse = await fetch(
+             `${API_URL}/payments/esewa/initiate`,
+             {
+               method: "POST",
+               headers: {
+                 "Content-Type": "application/json",
+                 Authorization: `Bearer ${token}`,
+               },
+               body: JSON.stringify({ orderId: order._id }),
+             },
+           );
 
           if (!paymentResponse.ok) {
             throw new Error("Failed to initiate payment");

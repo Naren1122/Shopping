@@ -8,6 +8,9 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+// API URL for backend
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 function EsewaDemoContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -37,7 +40,7 @@ function EsewaDemoContent() {
   const handleSuccess = async () => {
     try {
       const token = localStorage.getItem("token");
-      await fetch("http://localhost:5000/api/payments/esewa/verify", {
+      await fetch(`${API_URL}/payments/esewa/verify`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

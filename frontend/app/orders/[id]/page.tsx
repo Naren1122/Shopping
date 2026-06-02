@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import API_URL from "@/lib/api";
 import { useParams, useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -114,7 +115,7 @@ export default function OrderDetailPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/${order._id}/cancel`,
+        `${API_URL}/orders/${order._id}/cancel`,
         {
           method: "PATCH",
           headers: {
@@ -153,7 +154,7 @@ export default function OrderDetailPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/${order._id}`,
+        `${API_URL}/orders/${order._id}`,
         {
           method: "DELETE",
           headers: {
@@ -187,7 +188,7 @@ export default function OrderDetailPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/reviews`,
+        `${API_URL}/reviews`,
         {
           method: "POST",
           headers: {

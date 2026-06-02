@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
-import { Search, X} from "lucide-react";
+import { useEffect, useState, Suspense, useCallback } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { X, PackageOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -21,25 +21,62 @@ import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import {
   fetchAllProducts,
   fetchFeaturedProducts,
+  fetchProductsByCategory,
+  searchProducts,
+  Product,
 } from "@/lib/features/products/productsSlice";
+
+// Category display config
+const categoryConfig: Record<string, { icon: string; color: string }> = {
+  Electronics: { icon: "📱", color: "from-blue-500 to-blue-600" },
+  Clothing: { icon: "👕", color: "from-pink-500 to-pink-600" },
+  Books: { icon: "📚", color: "from-amber-500 to-amber-600" },
+  "Home & Garden": { icon: "🏠", color: "from-green-500 to-green-600" },
+  Sports: { icon: "⚽", color: "from-orange-500 to-orange-600" },
+  Toys: { icon: "🎮", color: "from-purple-500 to-purple-600" },
+  Beauty: { icon: "💄", color: "from-rose-500 to-rose-600" },
+  Food: { icon: "🍕", color: "from-red-500 to-red-600" },
+};
 
 function ProductsContent() {
   const dispatch = useAppDispatch();
   const searchParams = useSearchParams();
+  const router = useRouter();
 
-  const { products, featuredProducts, isLoading, total, page, pages } =
-    useAppSelector((state) => state.products);
+  const {
+    products,
+    featuredProducts,
+    categoryProducts,
+    isLoading,
+    total,
+    page,
+    pages,
+  } = useAppSelector((state) => state.products);
 
-  // Check if featured param exists in URL
+  // Check URL params
+  const categoryParam = searchParams.get("category");
   const featuredParam = searchParams.get("featured");
+  const searchParam = searchParams.get("search");
   const initialShowFeatured = featuredParam === "true";
 
   const [currentPage, setCurrentPage] = useState(1);
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(initialShowFeatured);
+  const [activeCategory, setActiveCategory] = useState<string | null>(
+    categoryParam
+  );
+  const [activeSearch, setActiveSearch] = useState<string | null>(searchParam);
+  const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [priceFilter, setPriceFilter] = useState<[number, number] | null>(null);
 
-  // Use featured products when filter is active
-  const displayedProducts = showFeaturedOnly ? featuredProducts : products;
+  // Determine which products to display based on active filters
+  const getDisplayedProducts = useCallback(() => {
+    if (showFeaturedOnly) return featuredProducts;
+    if (activeSearch) return searchResults;
+    if (activeCategory) return categoryProducts;
+    return products;
+  }, [showFeaturedOnly, featuredProducts, activeSearch, searchResults, activeCategory, categoryProducts, products]);
+
+  const displayedProducts = getDisplayedProducts();
 
   // Apply price filter client-side
   const filteredByPrice = priceFilter
@@ -48,32 +85,99 @@ function ProductsContent() {
       )
     : displayedProducts;
 
+  // Sync activeCategory and activeSearch with URL param changes
+  useEffect(() => {
+    if (categoryParam) {
+      setActiveCategory(categoryParam);
+      setShowFeaturedOnly(false);
+      setActiveSearch(null);
+    } else {
+      setActiveCategory(null);
+    }
+    if (searchParam) {
+      setActiveSearch(searchParam);
+      setShowFeaturedOnly(false);
+      setActiveCategory(null);
+    } else if (!categoryParam) {
+      setActiveSearch(null);
+    }
+  }, [categoryParam, searchParam]);
+
   // Fetch products on mount and when filters change
   useEffect(() => {
     if (showFeaturedOnly) {
       dispatch(fetchFeaturedProducts(""));
+    } else if (activeSearch) {
+      dispatch(searchProducts({ query: activeSearch, page: currentPage, limit: 8 }));
+    } else if (activeCategory) {
+      dispatch(fetchProductsByCategory({ category: activeCategory, page: currentPage, limit: 8 }));
     } else {
-      dispatch(fetchAllProducts({ page: 1, limit: 8 }));
+      dispatch(fetchAllProducts({ page: currentPage, limit: 8 }));
     }
-  }, [dispatch, showFeaturedOnly]);
+  }, [dispatch, showFeaturedOnly, activeSearch, activeCategory, currentPage]);
+
+  // Update searchResults when search thunk resolves
+  useEffect(() => {
+    if (activeSearch) {
+      const fetchSearch = async () => {
+        const result = await dispatch(searchProducts({ query: activeSearch, page: currentPage, limit: 8 }));
+        if (searchProducts.fulfilled.match(result)) {
+          const data = result.payload;
+          if (Array.isArray(data)) {
+            setSearchResults(data);
+          } else {
+            setSearchResults(data.products || []);
+          }
+        }
+      };
+      fetchSearch();
+    }
+  }, [activeSearch, currentPage]);
 
   const clearFilters = () => {
     setShowFeaturedOnly(false);
+    setActiveCategory(null);
+    setActiveSearch(null);
+    setSearchResults([]);
     setCurrentPage(1);
-    dispatch(fetchAllProducts({ page: 1, limit: 8 }));
+    setPriceFilter(null);
+    router.push("/products");
   };
 
   const handleFeaturedToggle = (featured: boolean) => {
     setShowFeaturedOnly(featured);
+    setActiveCategory(null);
+    setActiveSearch(null);
+    setSearchResults([]);
     setCurrentPage(1);
+    setPriceFilter(null);
     if (featured) {
+      router.push("/products?featured=true");
       dispatch(fetchFeaturedProducts(""));
     } else {
+      router.push("/products");
       dispatch(fetchAllProducts({ page: 1, limit: 8 }));
     }
   };
 
-  const hasFilters = showFeaturedOnly;
+  const handleCategoryClear = () => {
+    setActiveCategory(null);
+    setCurrentPage(1);
+    setPriceFilter(null);
+    router.push("/products");
+    dispatch(fetchAllProducts({ page: 1, limit: 8 }));
+  };
+
+  const handleSearchClear = () => {
+    setActiveSearch(null);
+    setSearchResults([]);
+    setCurrentPage(1);
+    setPriceFilter(null);
+    router.push("/products");
+    dispatch(fetchAllProducts({ page: 1, limit: 8 }));
+  };
+
+  const hasFilters = showFeaturedOnly || !!activeCategory || !!activeSearch;
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
@@ -92,11 +196,18 @@ function ProductsContent() {
             <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
               <div>
                 <h1 className="text-4xl font-extrabold mb-3 bg-gradient-to-r from-teal-600 to-teal-500 bg-clip-text text-transparent">
-                  All Products
+                  {activeSearch
+                    ? `Search: "${activeSearch}"`
+                    : activeCategory
+                      ? `${categoryConfig[activeCategory]?.icon || ""} ${activeCategory}`
+                      : "All Products"}
                 </h1>
                 <p className="text-lg text-muted-foreground max-w-xl">
-                  Discover our curated collection of high-quality products at
-                  unbeatable prices
+                  {activeSearch
+                    ? `Showing results for "${activeSearch}"`
+                    : activeCategory
+                      ? `Browse our selection of ${activeCategory.toLowerCase()} products`
+                      : "Discover our curated collection of high-quality products at unbeatable prices"}
                 </p>
               </div>
               <div className="w-full lg:w-[280px]">
@@ -113,14 +224,32 @@ function ProductsContent() {
 
         <div className="container mx-auto px-4 py-8">
           {/* Active Filters */}
-          {showFeaturedOnly && (
+          {hasFilters && (
             <div className="flex flex-wrap gap-2 mb-6">
-              <Badge variant="secondary" className="gap-1">
-                Featured Only
-                <button onClick={() => handleFeaturedToggle(false)}>
-                  <X className="h-3 w-3" />
-                </button>
-              </Badge>
+              {showFeaturedOnly && (
+                <Badge variant="secondary" className="gap-1">
+                  Featured Only
+                  <button onClick={() => handleFeaturedToggle(false)}>
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {activeCategory && (
+                <Badge variant="secondary" className="gap-1">
+                  {categoryConfig[activeCategory]?.icon || ""} {activeCategory}
+                  <button onClick={handleCategoryClear}>
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
+              {activeSearch && (
+                <Badge variant="secondary" className="gap-1">
+                  🔍 &quot;{activeSearch}&quot;
+                  <button onClick={handleSearchClear}>
+                    <X className="h-3 w-3" />
+                  </button>
+                </Badge>
+              )}
               <Button variant="ghost" size="sm" onClick={clearFilters}>
                 Clear all
               </Button>
@@ -152,24 +281,37 @@ function ProductsContent() {
             </div>
           ) : displayedProducts.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              {filteredByPrice.slice(0, 8).map((product) => (
+              {filteredByPrice.map((product) => (
                 <ProductCard key={product._id} product={product} />
               ))}
             </div>
           ) : (
             <div className="text-center py-16 bg-white dark:bg-gray-900 rounded-2xl border">
               <div className="w-24 h-24 mx-auto mb-6 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center">
-                <Search className="h-12 w-12 text-teal-500" />
+                <PackageOpen className="h-12 w-12 text-teal-500" />
               </div>
-              <h3 className="text-xl font-bold mb-3">No products found</h3>
+              <h3 className="text-xl font-bold mb-3">
+                {activeSearch
+                  ? `No results for "${activeSearch}"`
+                  : activeCategory
+                    ? `No ${activeCategory} products found`
+                    : "No products found"}
+              </h3>
               <p className="text-muted-foreground mb-6 max-w-md mx-auto">
-                No products available yet. Check back soon!
+                {activeSearch || activeCategory
+                  ? "Try a different search or browse all products"
+                  : "No products available yet. Check back soon!"}
               </p>
+              {hasFilters && (
+                <Button variant="outline" onClick={clearFilters}>
+                  Browse all products
+                </Button>
+              )}
             </div>
           )}
 
-          {/* Pagination - Always show for testing */}
-          {pages >= 1 && (
+          {/* Pagination */}
+          {pages >= 1 && !activeSearch && (
             <div className="mt-12">
               <Pagination>
                 <PaginationContent>
@@ -179,10 +321,13 @@ function ProductsContent() {
                       onClick={(e) => {
                         e.preventDefault();
                         if (page > 1) {
-                          setCurrentPage(page - 1);
-                          dispatch(
-                            fetchAllProducts({ page: page - 1, limit: 8 }),
-                          );
+                          const newPage = page - 1;
+                          setCurrentPage(newPage);
+                          if (activeCategory) {
+                            dispatch(fetchProductsByCategory({ category: activeCategory, page: newPage, limit: 8 }));
+                          } else {
+                            dispatch(fetchAllProducts({ page: newPage, limit: 8 }));
+                          }
                         }
                       }}
                       className={
@@ -196,8 +341,13 @@ function ProductsContent() {
                         href="#"
                         onClick={(e) => {
                           e.preventDefault();
-                          setCurrentPage(i + 1);
-                          dispatch(fetchAllProducts({ page: i + 1, limit: 8 }));
+                          const newPage = i + 1;
+                          setCurrentPage(newPage);
+                          if (activeCategory) {
+                            dispatch(fetchProductsByCategory({ category: activeCategory, page: newPage, limit: 8 }));
+                          } else {
+                            dispatch(fetchAllProducts({ page: newPage, limit: 8 }));
+                          }
                         }}
                         isActive={page === i + 1}
                       >
@@ -211,10 +361,13 @@ function ProductsContent() {
                       onClick={(e) => {
                         e.preventDefault();
                         if (page < pages) {
-                          setCurrentPage(page + 1);
-                          dispatch(
-                            fetchAllProducts({ page: page + 1, limit: 8 }),
-                          );
+                          const newPage = page + 1;
+                          setCurrentPage(newPage);
+                          if (activeCategory) {
+                            dispatch(fetchProductsByCategory({ category: activeCategory, page: newPage, limit: 8 }));
+                          } else {
+                            dispatch(fetchAllProducts({ page: newPage, limit: 8 }));
+                          }
                         }
                       }}
                       className={

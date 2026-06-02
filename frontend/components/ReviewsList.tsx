@@ -33,20 +33,20 @@ export function ReviewsList({ productId }: ReviewsListProps) {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetchReviews = async () => {
-      setIsLoading(true);
-      setError(null);
+const fetchReviews = async () => {
+       setIsLoading(true);
+       setError(null);
 
-      try {
-        // Fetch reviews
-        const reviewsRes = await fetch(`/api/reviews/product/${productId}`);
-        const reviewsData = await reviewsRes.json();
+       try {
+         // Fetch reviews
+         const reviewsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/reviews/product/${productId}`);
+         const reviewsData = await reviewsRes.json();
 
-        // Fetch rating info
-        const ratingRes = await fetch(
-          `/api/reviews/product/${productId}/rating`,
-        );
-        const ratingData = await ratingRes.json();
+         // Fetch rating info
+         const ratingRes = await fetch(
+           `${process.env.NEXT_PUBLIC_API_URL}/reviews/product/${productId}/rating`,
+         );
+         const ratingData = await ratingRes.json();
 
         if (reviewsRes.ok) {
           setReviews(reviewsData);

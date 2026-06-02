@@ -35,6 +35,41 @@ export function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState<Product[]>([]);
   const [showResults, setShowResults] = useState(false);
+  const [showRecentSearches, setShowRecentSearches] = useState(false);
+  const [isSearching, setIsSearching] = useState(false);
+  const [recentSearches, setRecentSearches] = useState<string[]>([]);
+
+  // Load recent searches from localStorage only after mount (avoids hydration mismatch)
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem("recentSearches");
+      if (stored) {
+        setRecentSearches(JSON.parse(stored));
+      }
+    } catch {
+      // ignore
+    }
+  }, []);
+
+  const saveRecentSearch = (query: string) => {
+    try {
+      const updated = [query, ...recentSearches.filter((s) => s.toLowerCase() !== query.toLowerCase())].slice(0, 5);
+      setRecentSearches(updated);
+      localStorage.setItem("recentSearches", JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+  };
+
+  const removeRecentSearch = (query: string) => {
+    try {
+      const updated = recentSearches.filter((s) => s.toLowerCase() !== query.toLowerCase());
+      setRecentSearches(updated);
+      localStorage.setItem("recentSearches", JSON.stringify(updated));
+    } catch {
+      // ignore
+    }
+  };
 
   // Handle scroll effect
   useEffect(() => {
@@ -45,26 +80,55 @@ export function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Handle search
-  const handleSearch = async (query: string) => {
-    setSearchQuery(query);
-    if (query.length > 2) {
-      const result = await dispatch(searchProducts(query));
-      if (searchProducts.fulfilled.match(result)) {
-        setSearchResults(result.payload);
-        setShowResults(true);
-      }
-    } else {
+  // Debounced search
+  useEffect(() => {
+    if (searchQuery.length <= 2) {
       setSearchResults([]);
       setShowResults(false);
+      setIsSearching(false);
+      return;
     }
-  };
+
+    setIsSearching(true);
+    const debounceTimer = setTimeout(async () => {
+      const result = await dispatch(searchProducts(searchQuery));
+      if (searchProducts.fulfilled.match(result)) {
+        const products = Array.isArray(result.payload)
+          ? result.payload
+          : result.payload.products;
+        setSearchResults(products);
+        setShowResults(true);
+      }
+      setIsSearching(false);
+    }, 300);
+
+    return () => {
+      clearTimeout(debounceTimer);
+      setIsSearching(false);
+    };
+  }, [searchQuery, dispatch]);
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (searchQuery.trim()) {
+      saveRecentSearch(searchQuery.trim());
       setShowResults(false);
+      setShowRecentSearches(false);
       router.push(`/products?search=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+
+  const handleRecentSearchClick = (query: string) => {
+    setSearchQuery(query);
+    setShowRecentSearches(false);
+    router.push(`/products?search=${encodeURIComponent(query)}`);
+  };
+
+  const handleInputFocus = () => {
+    if (searchQuery.length > 2 && searchResults.length > 0) {
+      setShowResults(true);
+    } else if (searchQuery.length <= 2) {
+      setShowRecentSearches(true);
     }
   };
 
@@ -96,53 +160,133 @@ export function Navbar() {
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
-                  placeholder="Search products..."
-                  className="w-full pl-10 pr-4 h-11 rounded-full border border-gray-300"
+                  placeholder="Search products, categories..."
+                  className="w-full pl-10 pr-10 h-11 rounded-full border border-gray-300"
                   value={searchQuery}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  onFocus={() =>
-                    searchResults.length > 0 && setShowResults(true)
-                  }
-                  onBlur={() => setTimeout(() => setShowResults(false), 200)}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowRecentSearches(false);
+                  }}
+                  onFocus={handleInputFocus}
+                  onBlur={() => {
+                    setTimeout(() => setShowResults(false), 200);
+                    setTimeout(() => setShowRecentSearches(false), 200);
+                  }}
                 />
+                {isSearching && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2">
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                  </div>
+                )}
+                {searchQuery.length > 0 && !isSearching && (
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                    onClick={() => {
+                      setSearchQuery("");
+                      setSearchResults([]);
+                      setShowResults(false);
+                    }}
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                )}
               </div>
             </form>
-            {/* Search Results Dropdown */}
-            {showResults && searchResults.length > 0 && (
-              <div className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-lg shadow-lg overflow-hidden">
-                {searchResults.slice(0, 5).map((product: Product) => (
-                  <Link
-                    key={product._id}
-                    href={`/products/${product._id}`}
-                    className="flex items-center gap-3 p-3 hover:bg-muted"
-                    onClick={() => setShowResults(false)}
+
+            {/* Recent Searches Dropdown */}
+            {showRecentSearches && recentSearches.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-lg shadow-lg overflow-hidden z-50">
+                <div className="p-3 border-b">
+                  <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Recent Searches</p>
+                </div>
+                {recentSearches.map((query) => (
+                  <div
+                    key={query}
+                    className="flex items-center justify-between px-3 py-2 hover:bg-muted cursor-pointer group"
                   >
-                    <div className="w-20 h-10 rounded bg-muted overflow-hidden shrink-0">
-                      {product.image && (
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className="w-full h-full object-cover"
-                        />
-                      )}
+                    <div
+                      className="flex items-center gap-2 flex-1"
+                      onClick={() => handleRecentSearchClick(query)}
+                    >
+                      <Search className="h-3.5 w-3.5 text-muted-foreground" />
+                      <span className="text-sm">{query}</span>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <p className="font-medium text-sm truncate">
-                        {product.name}
+                    <button
+                      className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-foreground p-1"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeRecentSearch(query);
+                      }}
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
+
+            {/* Search Results Dropdown */}
+            {showResults && searchQuery.length > 2 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-background border rounded-lg shadow-lg overflow-hidden z-50">
+                {searchResults.length > 0 ? (
+                  <>
+                    {searchResults.slice(0, 5).map((product: Product) => (
+                      <Link
+                        key={product._id}
+                        href={`/products/${product._id}`}
+                        className="flex items-center gap-3 p-3 hover:bg-muted"
+                        onClick={() => setShowResults(false)}
+                      >
+                        <div className="w-16 h-12 rounded bg-muted overflow-hidden shrink-0">
+                          {product.image && (
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          )}
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-sm truncate">
+                            {product.name}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs text-muted-foreground">
+                              Rs. {product.price.toLocaleString()}
+                            </span>
+                            {product.category && (
+                              <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                                {product.category}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                    <Link
+                      href={`/products?search=${encodeURIComponent(searchQuery)}`}
+                      className="block p-3 text-center text-sm text-primary hover:bg-muted border-t"
+                      onClick={() => {
+                        setShowResults(false);
+                        saveRecentSearch(searchQuery.trim());
+                      }}
+                    >
+                      View all {searchResults.length} results
+                    </Link>
+                  </>
+                ) : (
+                  !isSearching && (
+                    <div className="p-6 text-center">
+                      <p className="text-sm text-muted-foreground mb-2">
+                        No results for &quot;{searchQuery}&quot;
                       </p>
                       <p className="text-xs text-muted-foreground">
-                        Rs. {product.price.toLocaleString()}
+                        Try searching for a category like &quot;Electronics&quot; or &quot;Clothing&quot;
                       </p>
                     </div>
-                  </Link>
-                ))}
-                <Link
-                  href={`/products?search=${encodeURIComponent(searchQuery)}`}
-                  className="block p-3 text-center text-sm text-primary hover:bg-muted"
-                  onClick={() => setShowResults(false)}
-                >
-                  View all results
-                </Link>
+                  )
+                )}
               </div>
             )}
           </div>
@@ -268,13 +412,42 @@ export function Navbar() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
                 type="search"
-                placeholder="Search products..."
-                className="w-full pl-10 h-10 rounded-full border border-gray-300"
+                placeholder="Search products, categories..."
+                className="w-full pl-10 pr-10 h-10 rounded-full border border-gray-300"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
               />
+              {searchQuery.length > 0 && (
+                <button
+                  type="button"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  onClick={() => {
+                    setSearchQuery("");
+                    setSearchResults([]);
+                  }}
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
             </div>
           </form>
+          {/* Mobile Recent Searches */}
+          {searchQuery.length <= 2 && recentSearches.length > 0 && (
+            <div className="mt-2">
+              <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider mb-1">Recent</p>
+              <div className="flex flex-wrap gap-2">
+                {recentSearches.map((query) => (
+                  <button
+                    key={query}
+                    className="text-xs px-3 py-1.5 rounded-full bg-muted hover:bg-muted/80"
+                    onClick={() => handleRecentSearchClick(query)}
+                  >
+                    {query}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Mobile Menu */}

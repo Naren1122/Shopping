@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import API_URL from "@/lib/api";
 
 // Types
 export interface Product {
@@ -51,9 +52,6 @@ const getToken = () => {
   return null;
 };
 
-// API base URL
-const API_BASE = process.env.NEXT_PUBLIC_API_URL + "/products";
-
 // Async thunks
 
 // Fetch all products (public)
@@ -69,20 +67,24 @@ export const fetchAllProducts = createAsyncThunk(
       if (params.page) queryParams.append("page", params.page.toString());
       if (params.limit) queryParams.append("limit", params.limit.toString());
 
-      const response = await fetch(
-        `${API_BASE}?${queryParams.toString()}`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          credentials: "include",
-        },
-      );
-
-      const data = await response.json();
+       const response = await fetch(
+         `${API_URL}/products?${queryParams.toString()}`,
+         {
+           headers: token ? { Authorization: `Bearer ${token}` } : {},
+           credentials: "include",
+         },
+       );
 
       if (!response.ok) {
-        return rejectWithValue(data.message || "Failed to fetch products");
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          return rejectWithValue(data.message || "Failed to fetch products");
+        }
+        return rejectWithValue("Failed to fetch products");
       }
 
+      const data = await response.json();
       return data;
     } catch (error) {
       return rejectWithValue("Network error. Please try again.");
@@ -98,14 +100,12 @@ export const fetchFeaturedProducts = createAsyncThunk(
       const queryParams = category
         ? `?category=${encodeURIComponent(category)}`
         : "";
-      const response = await fetch(
-        `${API_BASE}/featured${queryParams}`,
-        {
-          credentials: "include",
-        },
-      );
-
-      const data = await response.json();
+       const response = await fetch(
+         `${API_URL}/products/featured${queryParams}`,
+         {
+           credentials: "include",
+         },
+       );
 
       if (!response.ok) {
         // Fallback: filter from existing products if API fails
@@ -116,11 +116,15 @@ export const fetchFeaturedProducts = createAsyncThunk(
         if (featuredFromProducts.length > 0) {
           return featuredFromProducts;
         }
-        return rejectWithValue(
-          data.message || "Failed to fetch featured products",
-        );
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          return rejectWithValue(data.message || "Failed to fetch featured products");
+        }
+        return rejectWithValue("Failed to fetch featured products");
       }
 
+      const data = await response.json();
       return data;
     } catch (error) {
       // Fallback: filter from existing products if API fails
@@ -136,25 +140,37 @@ export const fetchFeaturedProducts = createAsyncThunk(
   },
 );
 
-// Search products (public)
+// Search products (public) - now supports pagination
 export const searchProducts = createAsyncThunk(
   "products/search",
-  async (query: string, { rejectWithValue }) => {
+  async (
+    params: { query: string; page?: number; limit?: number } | string,
+    { rejectWithValue },
+  ) => {
     try {
-      const response = await fetch(
-        `${API_BASE}/search?q=${encodeURIComponent(query)}`,
-        {
-          credentials: "include",
-        },
-      );
+      // Support both string and object params for backward compatibility
+      const queryStr = typeof params === "string" ? params : params.query;
+      const page = typeof params === "object" ? params.page || 1 : 1;
+      const limit = typeof params === "object" ? params.limit || 10 : 10;
 
-      const data = await response.json();
+       const response = await fetch(
+         `${API_URL}/products/search?q=${encodeURIComponent(queryStr)}&page=${page}&limit=${limit}`,
+         {
+           credentials: "include",
+         },
+       );
 
       if (!response.ok) {
-        return rejectWithValue(data.message || "Failed to search products");
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          return rejectWithValue(data.message || "Failed to search products");
+        }
+        return rejectWithValue("Failed to search products");
       }
 
-      return data.products;
+      const data = await response.json();
+      return data; // Returns { products, page, pages, total }
     } catch (error) {
       return rejectWithValue("Network error. Please try again.");
     }
@@ -170,19 +186,23 @@ export const fetchProductsByCategory = createAsyncThunk(
   ) => {
     try {
       const { category, page = 1, limit = 10 } = params;
-      const response = await fetch(
-        `${API_BASE}/category/${encodeURIComponent(category)}?page=${page}&limit=${limit}`,
-        {
-          credentials: "include",
-        },
-      );
-
-      const data = await response.json();
+       const response = await fetch(
+         `${API_URL}/products/category/${encodeURIComponent(category)}?page=${page}&limit=${limit}`,
+         {
+           credentials: "include",
+         },
+       );
 
       if (!response.ok) {
-        return rejectWithValue(data.message || "Failed to fetch products");
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          return rejectWithValue(data.message || "Failed to fetch products");
+        }
+        return rejectWithValue("Failed to fetch products");
       }
 
+      const data = await response.json();
       return data;
     } catch (error) {
       return rejectWithValue("Network error. Please try again.");
@@ -204,23 +224,27 @@ export const createProduct = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      const token = getToken();
-      const response = await fetch(`${API_BASE}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(productData),
-        credentials: "include",
-      });
-
-      const data = await response.json();
+       const token = getToken();
+       const response = await fetch(`${API_URL}/products`, {
+         method: "POST",
+         headers: {
+           "Content-Type": "application/json",
+           Authorization: `Bearer ${token}`,
+         },
+         body: JSON.stringify(productData),
+         credentials: "include",
+       });
 
       if (!response.ok) {
-        return rejectWithValue(data.message || "Failed to create product");
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          return rejectWithValue(data.message || "Failed to create product");
+        }
+        return rejectWithValue("Failed to create product");
       }
 
+      const data = await response.json();
       return data;
     } catch (error) {
       return rejectWithValue("Network error. Please try again.");
@@ -233,22 +257,25 @@ export const deleteProduct = createAsyncThunk(
   "products/delete",
   async (productId: string, { rejectWithValue }) => {
     try {
-      const token = getToken();
-      const response = await fetch(
-        `${API_BASE}/${productId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: "include",
-        },
-      );
-
-      const data = await response.json();
+       const token = getToken();
+       const response = await fetch(
+         `${API_URL}/products/${productId}`,
+         {
+           method: "DELETE",
+           headers: {
+             Authorization: `Bearer ${token}`,
+           },
+           credentials: "include",
+         },
+       );
 
       if (!response.ok) {
-        return rejectWithValue(data.message || "Failed to delete product");
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          return rejectWithValue(data.message || "Failed to delete product");
+        }
+        return rejectWithValue("Failed to delete product");
       }
 
       return productId;
@@ -263,24 +290,28 @@ export const toggleFeatured = createAsyncThunk(
   "products/toggleFeatured",
   async (productId: string, { rejectWithValue }) => {
     try {
-      const token = getToken();
-      const response = await fetch(
-        `${API_BASE}/${productId}`,
-        {
-          method: "PATCH",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: "include",
-        },
-      );
-
-      const data = await response.json();
+       const token = getToken();
+       const response = await fetch(
+         `${API_URL}/products/${productId}`,
+         {
+           method: "PATCH",
+           headers: {
+             Authorization: `Bearer ${token}`,
+           },
+           credentials: "include",
+         },
+       );
 
       if (!response.ok) {
-        return rejectWithValue(data.message || "Failed to update product");
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          return rejectWithValue(data.message || "Failed to update product");
+        }
+        return rejectWithValue("Failed to update product");
       }
 
+      const data = await response.json();
       return data;
     } catch (error) {
       return rejectWithValue("Network error. Please try again.");
@@ -299,26 +330,29 @@ export const updateProduct = createAsyncThunk(
     { rejectWithValue },
   ) => {
     try {
-      const token = getToken();
-      const response = await fetch(
-        `${API_BASE}/${productId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify(productData),
-          credentials: "include",
-        },
-      );
-
-      const data = await response.json();
+       const token = getToken();
+       const response = await fetch(
+         `${API_URL}/products/${productId}`,
+         {
+           method: "PUT",
+           headers: {
+             "Content-Type": "application/json",
+             Authorization: `Bearer ${token}`,
+           },
+           body: JSON.stringify(productData),
+         },
+       );
 
       if (!response.ok) {
-        return rejectWithValue(data.message || "Failed to update product");
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          return rejectWithValue(data.message || "Failed to update product");
+        }
+        return rejectWithValue("Failed to update product");
       }
 
+      const data = await response.json();
       return data;
     } catch (error) {
       return rejectWithValue("Network error. Please try again.");
@@ -332,20 +366,24 @@ export const fetchProductById = createAsyncThunk(
   async (productId: string, { rejectWithValue }) => {
     try {
       const token = getToken();
-      const response = await fetch(
-        `${API_BASE}/${productId}`,
-        {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-          credentials: "include",
-        },
-      );
-
-      const data = await response.json();
+       const response = await fetch(
+         `${API_URL}/products/${productId}`,
+         {
+           headers: token ? { Authorization: `Bearer ${token}` } : {},
+           credentials: "include",
+         },
+       );
 
       if (!response.ok) {
-        return rejectWithValue(data.message || "Failed to fetch product");
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/json")) {
+          const data = await response.json();
+          return rejectWithValue(data.message || "Failed to fetch product");
+        }
+        return rejectWithValue("Failed to fetch product");
       }
 
+      const data = await response.json();
       return data;
     } catch (error) {
       return rejectWithValue("Network error. Please try again.");
@@ -403,7 +441,15 @@ const productsSlice = createSlice({
       })
       .addCase(searchProducts.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.searchResults = action.payload;
+        // Handle both old format (array) and new format ({ products, page, pages, total })
+        if (Array.isArray(action.payload)) {
+          state.searchResults = action.payload;
+        } else {
+          state.searchResults = action.payload.products;
+          state.total = action.payload.total;
+          state.page = action.payload.page;
+          state.pages = action.payload.pages;
+        }
       })
       .addCase(searchProducts.rejected, (state, action) => {
         state.isLoading = false;

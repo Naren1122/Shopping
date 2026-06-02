@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import API_URL from "@/lib/api";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -115,7 +116,7 @@ export default function AdminDashboardPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/analytics/overview`,
+        `${API_URL}/analytics/overview`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -166,7 +167,7 @@ export default function AdminDashboardPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/admin/all?limit=5`,
+        `${API_URL}/orders/admin/all?limit=5`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

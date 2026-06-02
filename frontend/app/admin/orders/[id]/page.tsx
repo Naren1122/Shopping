@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import API_URL from "@/lib/api";
 import { useRouter, useParams } from "next/navigation";
 import Link from "next/link";
 import { useAppSelector } from "@/lib/hooks";
@@ -71,7 +72,7 @@ export default function AdminOrderDetailPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/${orderId}`,
+        `${API_URL}/orders/${orderId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -104,7 +105,7 @@ export default function AdminOrderDetailPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/${orderId}/status`,
+        `${API_URL}/orders/${orderId}/status`,
         {
           method: "PATCH",
           headers: {

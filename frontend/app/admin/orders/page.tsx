@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import API_URL from "@/lib/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useAppSelector } from "@/lib/hooks";
@@ -109,7 +110,7 @@ export default function AdminOrdersPage() {
       }
 
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/admin/all?${queryParams.toString()}`,
+        `${API_URL}/orders/admin/all?${queryParams.toString()}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -143,7 +144,7 @@ export default function AdminOrdersPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/${orderId}/status`,
+        `${API_URL}/orders/${orderId}/status`,
         {
           method: "PATCH",
           headers: {
@@ -188,7 +189,7 @@ export default function AdminOrdersPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/${orderToCancel._id}/cancel`,
+        `${API_URL}/orders/${orderToCancel._id}/cancel`,
         {
           method: "PATCH",
           headers: {
@@ -237,7 +238,7 @@ export default function AdminOrdersPage() {
     try {
       const token = localStorage.getItem("token");
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api"}/orders/${orderToDelete._id}`,
+        `${API_URL}/orders/${orderToDelete._id}`,
         {
           method: "DELETE",
           headers: {

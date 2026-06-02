@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import API_URL from "@/lib/api";
 
 // Types
 export interface CartItem {
@@ -24,7 +25,7 @@ const initialState: CartState = {
   error: null,
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL + "/cart";
+// Helper to get token
 const getToken = () => {
   if (typeof window !== "undefined") {
     return localStorage.getItem("token");
@@ -46,12 +47,12 @@ export const fetchCart = createAsyncThunk(
         return rejectWithValue("Please login to view cart");
       }
 
-      const response = await fetch(`${API_BASE}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-      });
+       const response = await fetch(`${API_URL}/cart`, {
+         headers: {
+           Authorization: `Bearer ${token}`,
+         },
+         credentials: "include",
+       });
 
       const data = await response.json();
 
@@ -81,15 +82,15 @@ export const addToCart = createAsyncThunk(
         return rejectWithValue("Please login to add items to cart");
       }
 
-      const response = await fetch(`${API_BASE}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ productId, quantity }),
-        credentials: "include",
-      });
+       const response = await fetch(`${API_URL}/cart`, {
+         method: "POST",
+         headers: {
+           "Content-Type": "application/json",
+           Authorization: `Bearer ${token}`,
+         },
+         body: JSON.stringify({ productId, quantity }),
+         credentials: "include",
+       });
 
       const data = await response.json();
 
@@ -116,15 +117,15 @@ export const removeFromCart = createAsyncThunk(
         return rejectWithValue("Please login to manage cart");
       }
 
-      const response = await fetch(`${API_BASE}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ productId }),
-        credentials: "include",
-      });
+       const response = await fetch(`${API_URL}/cart`, {
+         method: "DELETE",
+         headers: {
+           "Content-Type": "application/json",
+           Authorization: `Bearer ${token}`,
+         },
+         body: JSON.stringify({ productId }),
+         credentials: "include",
+       });
 
       const data = await response.json();
 
@@ -154,18 +155,18 @@ export const updateCartQuantity = createAsyncThunk(
         return rejectWithValue("Please login to update cart");
       }
 
-      const response = await fetch(
-        `${API_BASE}/${productId}`,
-        {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({ quantity }),
-          credentials: "include",
-        },
-      );
+       const response = await fetch(
+         `${API_URL}/cart/${productId}`,
+         {
+           method: "PUT",
+           headers: {
+             "Content-Type": "application/json",
+             Authorization: `Bearer ${token}`,
+           },
+           body: JSON.stringify({ quantity }),
+           credentials: "include",
+         },
+       );
 
       const data = await response.json();
 

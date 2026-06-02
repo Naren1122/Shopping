@@ -356,10 +356,47 @@ export const getProductsWithPagination = async (req, res) => {
 export const searchProducts = async (req, res) => {
   try {
     const { q } = req.query;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-    const products = await Product.find({
-      name: { $regex: q, $options: "i" },
-    }).lean();
+    if (!q || q.trim().length === 0) {
+      return res.json({ products: [], page, pages: 0, total: 0 });
+    }
+
+    const searchRegex = new RegExp(q.trim(), "i");
+
+    // Search across name, description, and category with weighted relevance
+    const searchQuery = {
+      $or: [
+        { name: searchRegex },
+        { description: searchRegex },
+        { category: searchRegex },
+      ],
+    };
+
+    // Get total count for pagination
+    const total = await Product.countDocuments(searchQuery);
+
+    // Sort by relevance: name match first, then category match, then description match
+    const products = await Product.aggregate([
+      { $match: searchQuery },
+      {
+        $addFields: {
+          relevance: {
+            $add: [
+              { $cond: [{ $regexMatch: { input: "$name", regex: searchRegex } }, 10, 0] },
+              { $cond: [{ $regexMatch: { input: "$category", regex: searchRegex } }, 5, 0] },
+              { $cond: [{ $regexMatch: { input: "$description", regex: searchRegex } }, 1, 0] },
+            ],
+          },
+        },
+      },
+      { $sort: { relevance: -1, createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+      { $project: { relevance: 0 } },
+    ]);
 
     // Get review stats for each product
     const productIds = products.map((p) => p._id);
@@ -392,7 +429,12 @@ export const searchProducts = async (req, res) => {
       numReviews: reviewMap.get(product._id.toString())?.numReviews || 0,
     }));
 
-    res.json({ products: productsWithRatings });
+    res.json({
+      products: productsWithRatings,
+      page,
+      pages: Math.ceil(total / limit),
+      total,
+    });
   } catch (error) {
     console.log("Error in searchProducts", error.message);
     res.status(500).json({ message: "Server error", error: error.message });

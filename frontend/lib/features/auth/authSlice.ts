@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import API_URL from "@/lib/api";
 
 // Types
 interface User {
@@ -28,8 +29,8 @@ interface SignupCredentials {
   adminSecretKey?: string;
 }
 
-// API base URL for backend
-const API_URL = process.env.NEXT_PUBLIC_API_URL + "/auth";
+// API base URL for backend (uses centralized config)
+const AUTH_URL = `${API_URL}/auth`;
 
 // Initial state
 const initialState: AuthState = {
@@ -45,7 +46,7 @@ export const login = createAsyncThunk(
   "auth/login",
   async (credentials: LoginCredentials, { rejectWithValue }) => {
     try {
-      const response = await fetch(`${API_URL}/login`, {
+      const response = await fetch(`${AUTH_URL}/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(credentials),
@@ -79,7 +80,7 @@ export const signup = createAsyncThunk(
         }),
       };
 
-      const response = await fetch(`${API_URL}/signup`, {
+      const response = await fetch(`${AUTH_URL}/signup`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
@@ -102,7 +103,7 @@ export const signup = createAsyncThunk(
 export const logout = createAsyncThunk("auth/logout", async () => {
   try {
     // Call backend logout endpoint to clear cookies
-    await fetch(`${API_URL}/logout`, {
+    await fetch(`${AUTH_URL}/logout`, {
       method: "POST",
       credentials: "include",
     });
@@ -134,12 +135,12 @@ export const fetchProfile = createAsyncThunk(
         return rejectWithValue("No token found");
       }
 
-      const response = await fetch(`${API_URL}/profile`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-      });
+       const response = await fetch(`${AUTH_URL}/profile`, {
+         headers: {
+           Authorization: `Bearer ${token}`,
+         },
+         credentials: "include",
+       });
 
       const data = await response.json();
 
@@ -168,15 +169,15 @@ export const updateProfile = createAsyncThunk(
         return rejectWithValue("No token found");
       }
 
-      const response = await fetch(`${API_URL}/profile`, {
-        method: "PUT",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(profileData),
-        credentials: "include",
-      });
+       const response = await fetch(`${AUTH_URL}/profile`, {
+         method: "PUT",
+         headers: {
+           "Content-Type": "application/json",
+           Authorization: `Bearer ${token}`,
+         },
+         body: JSON.stringify(profileData),
+         credentials: "include",
+       });
 
       const data = await response.json();
 

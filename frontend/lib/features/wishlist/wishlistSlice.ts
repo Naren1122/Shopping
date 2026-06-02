@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import API_URL from "@/lib/api";
 
 // Types
 export interface WishlistItem {
@@ -24,7 +25,7 @@ const initialState: WishlistState = {
   error: null,
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL + "/wishlist";
+// Helper to get token
 const getToken = () => {
   if (typeof window !== "undefined") {
     return localStorage.getItem("token");
@@ -39,13 +40,13 @@ export const fetchWishlist = createAsyncThunk(
   "wishlist/fetchWishlist",
   async (_, { rejectWithValue }) => {
     try {
-      const token = getToken();
-      const response = await fetch(`${API_BASE}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        credentials: "include",
-      });
+       const token = getToken();
+       const response = await fetch(`${API_URL}/wishlist`, {
+         headers: {
+           Authorization: `Bearer ${token}`,
+         },
+         credentials: "include",
+       });
 
       const data = await response.json();
 
@@ -65,16 +66,16 @@ export const addToWishlist = createAsyncThunk(
   "wishlist/addToWishlist",
   async (productId: string, { rejectWithValue }) => {
     try {
-      const token = getToken();
-      const response = await fetch(`${API_BASE}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({ productId }),
-        credentials: "include",
-      });
+       const token = getToken();
+       const response = await fetch(`${API_URL}/wishlist`, {
+         method: "POST",
+         headers: {
+           "Content-Type": "application/json",
+           Authorization: `Bearer ${token}`,
+         },
+         body: JSON.stringify({ productId }),
+         credentials: "include",
+       });
 
       const data = await response.json();
 
@@ -98,16 +99,16 @@ export const removeFromWishlist = createAsyncThunk(
       console.log("removeFromWishlist: Token:", token ? "exists" : "null");
       console.log("removeFromWishlist: Product ID:", productId);
 
-      const response = await fetch(
-        `${API_BASE}/${productId}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-          credentials: "include",
-        },
-      );
+       const response = await fetch(
+         `${API_URL}/wishlist/${productId}`,
+         {
+           method: "DELETE",
+           headers: {
+             Authorization: `Bearer ${token}`,
+           },
+           credentials: "include",
+         },
+       );
 
       console.log("removeFromWishlist: Response status:", response.status);
 

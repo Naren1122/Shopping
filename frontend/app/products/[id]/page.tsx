@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import API_URL from "@/lib/api";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
@@ -53,7 +54,7 @@ export default function ProductDetailPage() {
       // Track browsing history if user is authenticated
       const token = localStorage.getItem("token");
       if (token) {
-        fetch("http://localhost:5000/api/auth/track-view", {
+        fetch(`${API_URL}/auth/track-view`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",

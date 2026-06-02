@@ -29,7 +29,9 @@ app.use((err, req, res, next) => {
 
 app.use(
   cors({
-    origin: process.env.FRONTEND_URL || "https://shopping-seven-lovat.vercel.app",
+
+      origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+   
     credentials: true,
   }),
 );
