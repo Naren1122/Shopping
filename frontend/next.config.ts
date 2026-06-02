@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/api/:path*",
-        destination: "https://shopping-1-6e39.onrender.com/api/:path*",
+        destination: `${process.env.BACKEND_URL || "https://shopping-kvfs.onrender.com"}/api/:path*`,
       },
     ];
   },

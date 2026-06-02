@@ -1,7 +1,8 @@
-export const dynamic = "force-dynamic";
 "use client";
 
-import { useEffect, useState } from "react";
+export const dynamic = "force-dynamic";
+
+import { useState } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import { XCircle, AlertTriangle, ShoppingCart, RefreshCw } from "lucide-react";

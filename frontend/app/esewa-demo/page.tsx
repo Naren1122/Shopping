@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { Loader2, CheckCircle, XCircle, CreditCard, Lock } from "lucide-react";
+import { Loader2, CheckCircle, XCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -23,11 +23,9 @@ export default function EsewaDemoPage() {
     username: "",
     password: "",
   });
-  const [error, setError] = useState("");
+  const [error ] = useState("");
 
-  // Demo credentials - any input works
-  const DEMO_USERNAME = "demo";
-  const DEMO_PASSWORD = "demo123";
+  
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();

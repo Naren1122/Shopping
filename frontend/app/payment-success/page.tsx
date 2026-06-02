@@ -1,7 +1,8 @@
-export const dynamic = "force-dynamic";
 "use client";
 
-import { useEffect, useState } from "react";
+export const dynamic = "force-dynamic";
+
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -63,7 +64,7 @@ export default function PaymentSuccessPage() {
         const user = JSON.parse(userStr);
         dispatch(initializeAuth({ user, token }));
         setIsAuthenticated(true);
-      } catch (e) {
+      } catch {
         setIsAuthenticated(false);
       }
     } else {
@@ -90,13 +91,7 @@ export default function PaymentSuccessPage() {
   }, [urlOrderId, isAuthenticated]);
 
   // Fetch order details when orderId is available
-  useEffect(() => {
-    if (orderId && isAuthenticated) {
-      fetchOrderDetails();
-    }
-  }, [orderId, isAuthenticated]);
-
-  const fetchOrderDetails = async () => {
+  const fetchOrderDetails = useCallback(async () => {
     if (!orderId) {
       setIsLoading(false);
       return;
@@ -120,7 +115,14 @@ export default function PaymentSuccessPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
+
+  // Call fetchOrderDetails when orderId or isAuthenticated changes
+  useEffect(() => {
+    if (orderId && isAuthenticated) {
+      fetchOrderDetails();
+    }
+  }, [orderId, isAuthenticated, fetchOrderDetails]);
 
   // Show loading while checking auth or not authenticated
   if (!authChecked || (!isAuthenticated && !isLoading)) {

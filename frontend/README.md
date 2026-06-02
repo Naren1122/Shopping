@@ -29,8 +29,32 @@ To learn more about Next.js, take a look at the following resources:
 
 You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
 
-## Deploy on Vercel
+## Deployment
+
+### Frontend (Vercel)
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
+1. Push your code to a Git repository (GitHub, GitLab, etc.)
+2. Connect your repository to Vercel
+3. Configure the environment variables:
+   - `BACKEND_URL`: Your backend URL (e.g., https://your-backend.onrender.com)
+   - Other necessary environment variables
+4. Deploy
+
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+
+### Backend (Render)
+
+1. Push your backend code to a Git repository
+2. Go to [Render.com](https://render.com) and create a new Web Service
+3. Connect your repository
+4. Configure the service:
+   - Build Command: `npm install`
+   - Start Command: `npm start`
+   - Environment Variables:
+     - `MONGO_URI`: Your MongoDB connection string
+     - `JWT_SECRET`: Your JWT secret key
+     - `FRONTEND_URL`: Your frontend URL (e.g., https://your-app.vercel.app)
+     - Other necessary environment variables
+5. Deploy

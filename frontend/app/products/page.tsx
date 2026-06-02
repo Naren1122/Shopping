@@ -2,7 +2,7 @@
 
 import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
-import { Search, X, Star } from "lucide-react";
+import { Search, X} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -34,7 +34,7 @@ function ProductsContent() {
   const featuredParam = searchParams.get("featured");
   const initialShowFeatured = featuredParam === "true";
 
-  const [currentPage, setCurrentPage] = useState(1);
+  const [ setCurrentPage] = useState(1);
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(initialShowFeatured);
   const [priceFilter, setPriceFilter] = useState<[number, number] | null>(null);
 
