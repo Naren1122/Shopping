@@ -38,6 +38,9 @@ const resetPasswordSchema = z
     path: ["confirmPassword"],
   });
 
+// API URL for backend
+const API_URL = process.env.NEXT_PUBLIC_API_URL + "/auth";
+
 type ResetPasswordFormData = z.infer<typeof resetPasswordSchema>;
 
 function ResetPasswordForm() {
@@ -84,7 +87,7 @@ function ResetPasswordForm() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/auth/reset-password",
+        `${API_URL}/reset-password`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

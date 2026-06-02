@@ -29,6 +29,9 @@ const forgotPasswordSchema = z.object({
     .email("Please enter a valid email address"),
 });
 
+// API URL for backend
+const API_URL = process.env.NEXT_PUBLIC_API_URL + "/auth";
+
 type ForgotPasswordFormData = z.infer<typeof forgotPasswordSchema>;
 
 export default function ForgotPasswordPage() {
@@ -53,7 +56,7 @@ export default function ForgotPasswordPage() {
 
     try {
       const response = await fetch(
-        "http://localhost:5000/api/auth/forgot-password",
+        `${API_URL}/forgot-password`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
