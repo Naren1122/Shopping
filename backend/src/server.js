@@ -16,7 +16,9 @@ import recommendationRoutes from "./routes/recommendation.route.js";
 import analyticsRoutes from "./routes/analytics.route.js";
 import chatRoutes from "./routes/chat.route.js";
 
+// Load .env file for local development (Render injects env vars directly)
 dotenv.config({ path: "./src/.env" });
+dotenv.config(); // fallback to root .env
 const app = express();
 connectDB();
 const PORT = process.env.PORT || 5001;
@@ -30,7 +32,14 @@ app.use((err, req, res, next) => {
 app.use(
   cors({
 
-      origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: (origin, callback) => {
+      // Normalize: strip trailing slashes to avoid CORS mismatches
+      const allowed = (process.env.FRONTEND_URL || "http://localhost:3000")
+        .split(",")
+        .map((url) => url.trim().replace(/\/+$/, ""));
+      if (!origin) return callback(null, true);
+      callback(null, allowed.includes(origin) || allowed.includes(origin.replace(/\/+$/, "")));
+    },
    
     credentials: true,
   }),
