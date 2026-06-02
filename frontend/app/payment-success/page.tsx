@@ -1,8 +1,6 @@
 "use client";
 
-export const dynamic = "force-dynamic";
-
-import { useEffect, useState, useCallback } from "react";
+import { Suspense, useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { useSearchParams, useRouter } from "next/navigation";
 import {
@@ -18,6 +16,8 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { useAppDispatch } from "@/lib/hooks";
 import { initializeAuth } from "@/lib/features/auth/authSlice";
+
+export const dynamic = "force-dynamic";
 
 interface OrderDetails {
   _id: string;
@@ -39,22 +39,19 @@ interface OrderDetails {
   orderStatus: string;
 }
 
-export default function PaymentSuccessPage() {
+function PaymentSuccessContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const dispatch = useAppDispatch();
 
-  // Check if user has a token in localStorage (more reliable than Redux state after redirect)
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [authChecked, setAuthChecked] = useState(false);
 
-  // Get orderId from URL first, then from localStorage
   const urlOrderId = searchParams.get("orderId");
   const [orderId, setOrderId] = useState<string | null>(urlOrderId);
   const [order, setOrder] = useState<OrderDetails | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  // Check authentication from localStorage (survives server-side redirects)
   useEffect(() => {
     const token = localStorage.getItem("token");
     const userStr = localStorage.getItem("user");
@@ -73,14 +70,12 @@ export default function PaymentSuccessPage() {
     setAuthChecked(true);
   }, [dispatch]);
 
-  // Redirect to login if not authenticated after checking
   useEffect(() => {
     if (authChecked && !isAuthenticated) {
       router.push("/login");
     }
   }, [authChecked, isAuthenticated, router]);
 
-  // Try to get orderId from localStorage if not in URL
   useEffect(() => {
     if (!urlOrderId && isAuthenticated) {
       const storedOrderId = localStorage.getItem("pendingOrderId");
@@ -90,7 +85,6 @@ export default function PaymentSuccessPage() {
     }
   }, [urlOrderId, isAuthenticated]);
 
-  // Fetch order details when orderId is available
   const fetchOrderDetails = useCallback(async () => {
     if (!orderId) {
       setIsLoading(false);
@@ -107,7 +101,6 @@ export default function PaymentSuccessPage() {
       if (response.ok) {
         const data = await response.json();
         setOrder(data);
-        // Clear the pending order ID after successful fetch
         localStorage.removeItem("pendingOrderId");
       }
     } catch (error) {
@@ -115,16 +108,14 @@ export default function PaymentSuccessPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [orderId]);
 
-  // Call fetchOrderDetails when orderId or isAuthenticated changes
   useEffect(() => {
     if (orderId && isAuthenticated) {
       fetchOrderDetails();
     }
   }, [orderId, isAuthenticated, fetchOrderDetails]);
 
-  // Show loading while checking auth or not authenticated
   if (!authChecked || (!isAuthenticated && !isLoading)) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -140,7 +131,6 @@ export default function PaymentSuccessPage() {
     );
   }
 
-  // If no orderId but authenticated, show generic success
   if (!orderId) {
     return (
       <div className="min-h-screen flex flex-col bg-background">
@@ -180,7 +170,6 @@ export default function PaymentSuccessPage() {
 
       <main className="flex-1 container mx-auto px-4 py-16">
         <div className="max-w-2xl mx-auto">
-          {/* Success Header */}
           <div className="text-center mb-12">
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 mb-6">
               <CheckCircle className="h-10 w-10 text-green-600" />
@@ -199,11 +188,9 @@ export default function PaymentSuccessPage() {
             )}
           </div>
 
-          {/* Order Details Card */}
           {!isLoading && order && (
             <Card className="mb-8">
               <CardContent className="pt-6 space-y-6">
-                {/* Order Status */}
                 <div className="flex items-center gap-3 p-4 bg-green-50 rounded-lg">
                   <Package className="h-5 w-5 text-green-600" />
                   <div>
@@ -220,7 +207,6 @@ export default function PaymentSuccessPage() {
                   </div>
                 </div>
 
-                {/* Shipping Address */}
                 <div>
                   <h3 className="font-semibold mb-2">Shipping Address</h3>
                   <p className="text-muted-foreground">
@@ -233,7 +219,6 @@ export default function PaymentSuccessPage() {
                   </p>
                 </div>
 
-                {/* Order Items */}
                 <div>
                   <h3 className="font-semibold mb-3">Order Items</h3>
                   <div className="space-y-3">
@@ -262,7 +247,6 @@ export default function PaymentSuccessPage() {
                   </div>
                 </div>
 
-                {/* Total */}
                 <div className="border-t pt-4 flex justify-between items-center">
                   <p className="font-semibold">Total Amount</p>
                   <p className="text-xl font-bold">
@@ -273,7 +257,6 @@ export default function PaymentSuccessPage() {
             </Card>
           )}
 
-          {/* Loading State */}
           {isLoading && (
             <div className="text-center py-8">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
@@ -281,7 +264,6 @@ export default function PaymentSuccessPage() {
             </div>
           )}
 
-          {/* Action Buttons */}
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/dashboard">
               <Button className="w-full sm:w-auto">
@@ -302,5 +284,19 @@ export default function PaymentSuccessPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function PaymentSuccessPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center min-h-screen">
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      }
+    >
+      <PaymentSuccessContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { Loader2, CheckCircle, XCircle, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
-export default function EsewaDemoPage() {
+function EsewaDemoContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -23,22 +23,18 @@ export default function EsewaDemoPage() {
     username: "",
     password: "",
   });
-  const [error ] = useState("");
-
-  
+  const [error] = useState("");
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setStep("processing");
 
-    // Simulate payment processing
     setTimeout(() => {
       setStep("success");
     }, 2000);
   };
 
   const handleSuccess = async () => {
-    // Call backend to confirm payment
     try {
       const token = localStorage.getItem("token");
       await fetch("http://localhost:5000/api/payments/esewa/verify", {
@@ -57,7 +53,6 @@ export default function EsewaDemoPage() {
       console.error("Error verifying payment:", err);
     }
 
-    // Redirect to success page
     router.push(`/payment-success?orderId=${orderId}`);
   };
 
@@ -65,7 +60,6 @@ export default function EsewaDemoPage() {
     router.push(`/payment-failed?orderId=${orderId}`);
   };
 
-  // If no orderId, show error
   if (!orderId) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-100">
@@ -83,7 +77,6 @@ export default function EsewaDemoPage() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 p-4">
       <Card className="w-full max-w-md">
-        {/* Header - Fake eSewa Branding */}
         <div className="bg-[#60b530] text-white p-4 rounded-t-lg">
           <div className="flex items-center gap-3">
             <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center">
@@ -106,7 +99,6 @@ export default function EsewaDemoPage() {
         </CardHeader>
 
         <CardContent>
-          {/* Amount Display */}
           {step !== "failed" && (
             <div className="bg-gray-50 p-4 rounded-lg mb-6 text-center">
               <p className="text-sm text-muted-foreground">Pay Amount</p>
@@ -119,7 +111,6 @@ export default function EsewaDemoPage() {
             </div>
           )}
 
-          {/* Step 1: Enter Credentials */}
           {step === "credentials" && (
             <form onSubmit={handleLogin} className="space-y-4">
               <div className="space-y-2">
@@ -176,7 +167,6 @@ export default function EsewaDemoPage() {
             </form>
           )}
 
-          {/* Step 2: Processing */}
           {step === "processing" && (
             <div className="text-center py-8">
               <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-[#60b530]" />
@@ -187,7 +177,6 @@ export default function EsewaDemoPage() {
             </div>
           )}
 
-          {/* Step 3: Success */}
           {step === "success" && (
             <div className="text-center py-6">
               <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
@@ -205,7 +194,6 @@ export default function EsewaDemoPage() {
             </div>
           )}
 
-          {/* Step 4: Failed */}
           {step === "failed" && (
             <div className="text-center py-6">
               <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
@@ -224,7 +212,6 @@ export default function EsewaDemoPage() {
             </div>
           )}
 
-          {/* Security Note */}
           <div className="mt-6 flex items-center justify-center gap-2 text-xs text-muted-foreground">
             <Lock className="h-3 w-3" />
             <span>Secure 256-bit SSL Encrypted Connection</span>
@@ -232,12 +219,23 @@ export default function EsewaDemoPage() {
         </CardContent>
       </Card>
 
-      {/* Footer */}
       <div className="fixed bottom-4 text-center w-full">
         <p className="text-xs text-muted-foreground">
           Demo Payment Page | For Development Testing Only
         </p>
       </div>
     </div>
+  );
+}
+
+export default function EsewaDemoPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    }>
+      <EsewaDemoContent />
+    </Suspense>
   );
 }
