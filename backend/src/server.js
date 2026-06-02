@@ -27,12 +27,22 @@ app.use((err, req, res, next) => {
   res.status(500).json({ message: err.message || "Internal Server Error" });
 });
 
-app.use(
-  cors({
-    origin: process.env.FRONTEND_URL || "http://localhost:3000",
-    credentials: true,
-  }),
-);
+const allowedOrigins = (process.env.FRONTEND_URL || "http://localhost:3000").split(",");
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    // Check if the origin is in the allowed origins list
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      return callback(null, true);
+    } else {
+      return callback(new Error("Not allowed by CORS")); // Reject the request
+    }
+  },
+  credentials: true,
+}));
 
 app.use(express.json({ limit: "10mb" })); // allows us to parse incoming requests with JSON payloads
 
