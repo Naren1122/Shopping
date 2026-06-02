@@ -20,14 +20,6 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  async rewrites() {
-    return [
-      {
-        source: "/api/:path*",
-        destination: "https://shopping-1-6e39.onrender.com/api/:path*",
-      },
-    ];
-  },
 };
 
 export default nextConfig;
