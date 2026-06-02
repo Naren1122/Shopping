@@ -1,7 +1,6 @@
 import Product from "../models/product.model.js";
 import Review from "../models/review.model.js";
 import cloudinary from "../lib/cloudinary.js";
-import { redis } from "../lib/redis.js";
 
 export const getAllProducts = async (req, res) => {
   try {
@@ -64,22 +63,8 @@ export const getFeaturedProducts = async (req, res) => {
       query.category = new RegExp("^" + category + "$", "i");
     }
 
-    // Try to get from Redis cache
-    try {
-      const cacheKey =
-        category && category !== "all"
-          ? "featured_products_" + category
-          : "featured_products";
-      const cached = await redis.get(cacheKey);
-      if (cached) {
-        return res.json(JSON.parse(cached));
-      }
-    } catch (redisError) {
-      console.log(
-        "Redis get error, falling back to MongoDB:",
-        redisError.message,
-      );
-    }
+    // Redis caching disabled - directly fetch from MongoDB
+    console.log("[Redis Disabled] Skipping Redis cache and fetching from MongoDB");
 
     // if not in redis, fetch from mongodb
     const featuredProducts = await Product.find(query).lean();
@@ -119,16 +104,7 @@ export const getFeaturedProducts = async (req, res) => {
       numReviews: reviewMap.get(product._id.toString())?.numReviews || 0,
     }));
 
-    // Try to store in redis for future quick access
-    try {
-      const cacheKey =
-        category && category !== "all"
-          ? "featured_products_" + category
-          : "featured_products";
-      await redis.set(cacheKey, JSON.stringify(productsWithRatings));
-    } catch (redisError) {
-      console.log("Redis set error:", redisError.message);
-    }
+    // Redis caching disabled - not storing in cache
 
     res.json(productsWithRatings);
   } catch (error) {
@@ -315,12 +291,8 @@ export const updateProduct = async (req, res) => {
 };
 
 async function updateFeaturedProductsCache() {
-  try {
-    const featuredProducts = await Product.find({ isFeatured: true }).lean();
-    await redis.set("featured_products", JSON.stringify(featuredProducts));
-  } catch (error) {
-    console.log("error in update cache function");
-  }
+  // Redis caching disabled - function does nothing
+  console.log("[Redis Disabled] updateFeaturedProductsCache function called but does nothing");
 }
 
 // @desc    Get products with pagination
