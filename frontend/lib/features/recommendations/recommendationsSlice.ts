@@ -29,6 +29,9 @@ const initialState: RecommendationsState = {
   error: null,
 };
 
+// API base URL
+const API_BASE = process.env.NEXT_PUBLIC_API_URL + "/recommendations";
+
 // Get auth token
 const getToken = () => {
   if (typeof window !== "undefined") {
@@ -47,7 +50,7 @@ export const fetchRecommendations = createAsyncThunk(
         return rejectWithValue("Not authenticated");
       }
 
-      const response = await fetch("http://localhost:5000/api/recommendations", {
+      const response = await fetch(`${API_BASE}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

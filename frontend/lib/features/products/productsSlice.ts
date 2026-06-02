@@ -51,6 +51,9 @@ const getToken = () => {
   return null;
 };
 
+// API base URL
+const API_BASE = process.env.NEXT_PUBLIC_API_URL + "/products";
+
 // Async thunks
 
 // Fetch all products (public)
@@ -67,7 +70,7 @@ export const fetchAllProducts = createAsyncThunk(
       if (params.limit) queryParams.append("limit", params.limit.toString());
 
       const response = await fetch(
-        `http://localhost:5000/api/products?${queryParams.toString()}`,
+        `${API_BASE}?${queryParams.toString()}`,
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           credentials: "include",
@@ -96,7 +99,7 @@ export const fetchFeaturedProducts = createAsyncThunk(
         ? `?category=${encodeURIComponent(category)}`
         : "";
       const response = await fetch(
-        `http://localhost:5000/api/products/featured${queryParams}`,
+        `${API_BASE}/featured${queryParams}`,
         {
           credentials: "include",
         },
@@ -139,7 +142,7 @@ export const searchProducts = createAsyncThunk(
   async (query: string, { rejectWithValue }) => {
     try {
       const response = await fetch(
-        `http://localhost:5000/api/products/search?q=${encodeURIComponent(query)}`,
+        `${API_BASE}/search?q=${encodeURIComponent(query)}`,
         {
           credentials: "include",
         },
@@ -168,7 +171,7 @@ export const fetchProductsByCategory = createAsyncThunk(
     try {
       const { category, page = 1, limit = 10 } = params;
       const response = await fetch(
-        `http://localhost:5000/api/products/category/${encodeURIComponent(category)}?page=${page}&limit=${limit}`,
+        `${API_BASE}/category/${encodeURIComponent(category)}?page=${page}&limit=${limit}`,
         {
           credentials: "include",
         },
@@ -202,7 +205,7 @@ export const createProduct = createAsyncThunk(
   ) => {
     try {
       const token = getToken();
-      const response = await fetch("http://localhost:5000/api/products", {
+      const response = await fetch(`${API_BASE}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -232,7 +235,7 @@ export const deleteProduct = createAsyncThunk(
     try {
       const token = getToken();
       const response = await fetch(
-        `http://localhost:5000/api/products/${productId}`,
+        `${API_BASE}/${productId}`,
         {
           method: "DELETE",
           headers: {
@@ -262,7 +265,7 @@ export const toggleFeatured = createAsyncThunk(
     try {
       const token = getToken();
       const response = await fetch(
-        `http://localhost:5000/api/products/${productId}`,
+        `${API_BASE}/${productId}`,
         {
           method: "PATCH",
           headers: {
@@ -298,7 +301,7 @@ export const updateProduct = createAsyncThunk(
     try {
       const token = getToken();
       const response = await fetch(
-        `http://localhost:5000/api/products/${productId}`,
+        `${API_BASE}/${productId}`,
         {
           method: "PUT",
           headers: {
@@ -330,7 +333,7 @@ export const fetchProductById = createAsyncThunk(
     try {
       const token = getToken();
       const response = await fetch(
-        `http://localhost:5000/api/products/${productId}`,
+        `${API_BASE}/${productId}`,
         {
           headers: token ? { Authorization: `Bearer ${token}` } : {},
           credentials: "include",

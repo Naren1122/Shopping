@@ -47,6 +47,9 @@ const initialState: OrdersState = {
   error: null,
 };
 
+// API base URL
+const API_BASE = process.env.NEXT_PUBLIC_API_URL + "/orders";
+
 // Get auth token
 const getToken = () => {
   if (typeof window !== "undefined") {
@@ -65,7 +68,7 @@ export const fetchUserOrders = createAsyncThunk(
         return rejectWithValue("Not authenticated");
       }
 
-      const response = await fetch("http://localhost:5000/api/orders", {
+      const response = await fetch(`${API_BASE}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -95,7 +98,7 @@ export const fetchOrderById = createAsyncThunk(
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/orders/${orderId}`,
+        `${API_BASE}/${orderId}`,
         {
           headers: {
             Authorization: `Bearer ${token}`,

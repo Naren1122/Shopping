@@ -24,7 +24,7 @@ const initialState: CartState = {
   error: null,
 };
 
-// Helper to get token
+const API_BASE = process.env.NEXT_PUBLIC_API_URL + "/cart";
 const getToken = () => {
   if (typeof window !== "undefined") {
     return localStorage.getItem("token");
@@ -46,7 +46,7 @@ export const fetchCart = createAsyncThunk(
         return rejectWithValue("Please login to view cart");
       }
 
-      const response = await fetch("http://localhost:5000/api/cart", {
+      const response = await fetch(`${API_BASE}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -81,7 +81,7 @@ export const addToCart = createAsyncThunk(
         return rejectWithValue("Please login to add items to cart");
       }
 
-      const response = await fetch("http://localhost:5000/api/cart", {
+      const response = await fetch(`${API_BASE}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -116,7 +116,7 @@ export const removeFromCart = createAsyncThunk(
         return rejectWithValue("Please login to manage cart");
       }
 
-      const response = await fetch("http://localhost:5000/api/cart", {
+      const response = await fetch(`${API_BASE}`, {
         method: "DELETE",
         headers: {
           "Content-Type": "application/json",
@@ -155,7 +155,7 @@ export const updateCartQuantity = createAsyncThunk(
       }
 
       const response = await fetch(
-        `http://localhost:5000/api/cart/${productId}`,
+        `${API_BASE}/${productId}`,
         {
           method: "PUT",
           headers: {

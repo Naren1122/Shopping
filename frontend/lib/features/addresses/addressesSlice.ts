@@ -49,7 +49,7 @@ const initialState: AddressState = {
 };
 
 // API base URL
-const API_URL = "http://localhost:5000/api/addresses";
+const API_URL = process.env.NEXT_PUBLIC_API_URL + "/addresses";
 
 // Helper to get token
 const getToken = () => {

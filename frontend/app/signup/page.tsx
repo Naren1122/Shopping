@@ -24,7 +24,7 @@ import { useAppDispatch, useAppSelector } from "@/lib/hooks";
 import { signup, clearError } from "@/lib/features/auth/authSlice";
 
 // API URL for backend
-const API_URL = "http://localhost:5000/api/auth";
+const API_URL = process.env.NEXT_PUBLIC_API_URL + "/auth";
 
 // Zod schema for signup
 const signupSchema = z

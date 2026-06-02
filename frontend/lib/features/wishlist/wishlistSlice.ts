@@ -24,7 +24,7 @@ const initialState: WishlistState = {
   error: null,
 };
 
-// Helper to get token
+const API_BASE = process.env.NEXT_PUBLIC_API_URL + "/wishlist";
 const getToken = () => {
   if (typeof window !== "undefined") {
     return localStorage.getItem("token");
@@ -40,7 +40,7 @@ export const fetchWishlist = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const token = getToken();
-      const response = await fetch("http://localhost:5000/api/wishlist", {
+      const response = await fetch(`${API_BASE}`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -66,7 +66,7 @@ export const addToWishlist = createAsyncThunk(
   async (productId: string, { rejectWithValue }) => {
     try {
       const token = getToken();
-      const response = await fetch("http://localhost:5000/api/wishlist", {
+      const response = await fetch(`${API_BASE}`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -99,7 +99,7 @@ export const removeFromWishlist = createAsyncThunk(
       console.log("removeFromWishlist: Product ID:", productId);
 
       const response = await fetch(
-        `http://localhost:5000/api/wishlist/${productId}`,
+        `${API_BASE}/${productId}`,
         {
           method: "DELETE",
           headers: {
