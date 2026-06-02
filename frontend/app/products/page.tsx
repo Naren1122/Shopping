@@ -34,7 +34,7 @@ function ProductsContent() {
   const featuredParam = searchParams.get("featured");
   const initialShowFeatured = featuredParam === "true";
 
-  const [ setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [showFeaturedOnly, setShowFeaturedOnly] = useState(initialShowFeatured);
   const [priceFilter, setPriceFilter] = useState<[number, number] | null>(null);
 
