@@ -24,12 +24,22 @@
 
 [Features](#-features) • [Tech Stack](#-technology-stack) • [Getting Started](#-getting-started) • [API Docs](#-api-endpoints)
 
+🔗 **[Live Demo Website](https://shopping-blue-two.vercel.app/)**  
+📺 **[Video Walkthrough & Explanation](https://youtu.-wvtIC3Oc5s)**
+
 ---
 
 ## 📋 Table of Contents
 
+<<<<<<< HEAD
 - [Project Description](#-project-description)
 - [Technology Stack](#-technology-stack)
+=======
+- [Project Description](#project-description)
+- [Video Demonstration](#-video-demonstration)
+- [App Preview & Screenshots](#-app-preview--screenshots)
+- [Technology Stack](#️-technology-stack)
+>>>>>>> f5997ec20b96a9be5e66c57849bdac4362cee8a8
   - [Backend](#backend-nodejs--express)
   - [Frontend](#frontend-nextjs)
 - [Features](#-features)
@@ -47,11 +57,15 @@
   - [Environment Variables](#environment-variables)
   - [Running the Application](#running-the-application)
 - [Project Structure](#-project-structure)
+<<<<<<< HEAD
 - [Contributing](#-contributing)
 - [License](#-license)
 - [Support](#-support)
 
 </div>
+=======
+- [License](#-license)
+>>>>>>> f5997ec20b96a9be5e66c57849bdac4362cee8a8
 
 ---
 
@@ -75,7 +89,33 @@
 
 ---
 
+<<<<<<< HEAD
 <div align="center">
+=======
+## 📺 Video Demonstration
+
+For an in-depth video walkthrough where I explain the codebase architecture, design choices, and technical implementation details of Bazar, check out the video below:
+
+👉 **[Watch the Full Demo & Explanation Video on YouTube](https://youtu.-wvtIC3Oc5s)**
+
+---
+
+## 📸 App Preview & Screenshots
+
+### 1. Dynamic Marketplace Interface
+Clean grid layout displaying catalog inventory, dynamic product cards, real-time pricing structure, and instantaneous stock status indicators ("Out of Stock" / "Unavailable").
+![Bazar Marketplace](bazar1.jpg)
+
+### 2. Personalized User Dashboard
+Tailored greeting screen interface ("Hello, Ram!") tracking user shopping states with deep links to custom orders, active wishlists, cart verification, and a Gemini-powered recommendation carousel panel.
+![User Dashboard](bazar2.jpg)
+
+### 3. Native eSewa Secure Payment Gateway
+Mock validation checkout flow integrated directly with the production-ready structure of Nepal's primary gateway provider (eSewa), parsing real-time transaction balances securely.
+![eSewa Payment Integration](bazar3.jpg)
+
+---
+>>>>>>> f5997ec20b96a9be5e66c57849bdac4362cee8a8
 
 ## 🛠️ Technology Stack
 
@@ -190,6 +230,7 @@
 
 ### 🔐 Authentication (`/api/auth`)
 
+<<<<<<< HEAD
 | Method | Endpoint | Description | Auth Required |
 |:-------|:---------|:------------|:-------------|
 | `POST` | `/api/auth/signup` | User registration | ❌ |
@@ -199,6 +240,17 @@
 | `POST` | `/api/auth/forgot-password` | Request password reset | ❌ |
 | `POST` | `/api/auth/reset-password` | Reset password with token | ❌ |
 | `GET` | `/api/auth/profile` | Get user profile | ✅ |
+=======
+| Method | Endpoint                     | Description                  |
+| ------ | ---------------------------- | ---------------------------- |
+| POST   | `/api/auth/signup`           | User registration            |
+| POST   | `/api/auth/login`            | User login                   |
+| POST   | `/api/auth/logout`           | User logout                  |
+| POST   | `/api/auth/refresh-token`    | Refresh access token         |
+| POST   | `/api/auth/forgot-password`  | Request password reset       |
+| POST   | `/api/auth/reset-password`   | Reset password with token    |
+| GET    | `/api/auth/profile`          | Get user profile (protected) |
+>>>>>>> f5997ec20b96a9be5e66c57849bdac4362cee8a8
 
 ### 📦 Products (`/api/products`)
 
@@ -241,6 +293,7 @@
 
 ### 📍 Addresses (`/api/addresses`)
 
+<<<<<<< HEAD
 | Method | Endpoint | Description | Auth Required |
 |:-------|:---------|:------------|:-------------|
 | `GET` | `/api/addresses` | Get user addresses | ✅ |
@@ -248,6 +301,15 @@
 | `PUT` | `/api/addresses/:id` | Update address | ✅ |
 | `DELETE` | `/api/addresses/:id` | Delete address | ✅ |
 | `PATCH` | `/api/addresses/:id/default` | Set default address | ✅ |
+=======
+| Method | Endpoint                    | Description          |
+| ------ | --------------------------- | -------------------- |
+| GET    | `/api/addresses`            | Get user addresses   |
+| POST   | `/api/addresses`            | Add address          |
+| PUT    | `/api/addresses/:id`        | Update address       |
+| DELETE | `/api/addresses/:id`        | Delete address       |
+| PATCH  | `/api/addresses/:id/default` | Set default address |
+>>>>>>> f5997ec20b96a9be5e66c57849bdac4362cee8a8
 
 ### 💳 Payments (`/api/payments`)
 
@@ -258,10 +320,17 @@
 
 ### ⭐ Reviews (`/api/reviews`)
 
+<<<<<<< HEAD
 | Method | Endpoint | Description | Auth Required |
 |:-------|:---------|:------------|:-------------|
 | `GET` | `/api/reviews/product/:productId` | Get product reviews | ❌ |
 | `POST` | `/api/reviews` | Create review | ✅ |
+=======
+| Method | Endpoint                          | Description          |
+| ------ | --------------------------------- | -------------------- |
+| GET    | `/api/reviews/product/:productId` | Get product reviews  |
+| POST   | `/api/reviews`                    | Create review        |
+>>>>>>> f5997ec20b96a9be5e66c57849bdac4362cee8a8
 
 ### 🎟️ Coupons (`/api/coupons`)
 
@@ -333,8 +402,8 @@ npm install
 # Install frontend dependencies
 cd ../frontend
 npm install
-```
 
+<<<<<<< HEAD
 ### 🔐 Environment Variables
 
 Create `.env` files in both `backend` and `frontend` directories:
@@ -343,6 +412,13 @@ Create `.env` files in both `backend` and `frontend` directories:
 
 ```env
 # Server Configuration
+=======
+
+### Backend (backend/.env)
+
+
+# Server
+>>>>>>> f5997ec20b96a9be5e66c57849bdac4362cee8a8
 PORT=5000
 NODE_ENV=development
 
@@ -377,8 +453,8 @@ ESEWA_TEST_MODE=true
 
 # Gemini AI Configuration
 GEMINI_API_KEY=your_gemini_api_key
-```
 
+<<<<<<< HEAD
 #### Frontend Configuration (`frontend/.env.local`)
 
 ```env
@@ -456,3 +532,12 @@ This project is licensed under the **ISC License**.
 <p align="center">
   Built with ❤️ for the Nepali e-commerce community
 </p>
+=======
+
+### Frontend (frontend/.env.local)
+NEXT_PUBLIC_API_URL=http://localhost:5000/api
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+
+
+###
+>>>>>>> f5997ec20b96a9be5e66c57849bdac4362cee8a8
