@@ -7,6 +7,10 @@
 [![Redis](https://img.shields.io/badge/Redis-Upstash-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
 [![License](https://img.shields.io/badge/License-ISC-green?style=for-the-badge)](LICENSE)
 
+![Project Screenshot 1](photo/bazar1.jpg)
+![Project Screenshot 2](photo/bazar2.jpg)
+![Project Screenshot 3](photo/bazar3.jpg)
+
 > A production‑style e‑commerce app for the Nepali market: catalog → cart → checkout → eSewa payment → order management, with JWT auth, security hardening, and AI‑based recommendations.
 
 ## ✨ Live Demo & Walkthrough
@@ -221,12 +225,6 @@ bazar/
     ├── package.json
     └── .env.local.example
 ```
-
-## 📄 License
-
-ISC
-
----
 
 <p align="center">Built with ❤️ for the Nepali e‑commerce community</p>
 
