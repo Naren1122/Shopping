@@ -226,11 +226,14 @@ bazar/
     └── .env.local.example
 ```
 
+<<<<<<< HEAD
 ## 📄 License
 
 ISC
 
 ---
 
+=======
+>>>>>>> f48867edb3239a5e155b3ab65fcaaadf6b3884fb
 <p align="center">Built with ❤️ for the Nepali e‑commerce community</p>
 
