@@ -11,30 +11,35 @@
 
 A comprehensive full-stack e-commerce platform built with modern technologies, featuring AI-powered product recommendations and Nepal's popular eSewa payment gateway integration.
 
+🔗 **[Live Demo Website](https://shopping-blue-two.vercel.app/)**  
+📺 **[Video Walkthrough & Explanation](https://youtu.-wvtIC3Oc5s)**
+
 ---
 
 ## 📋 Table of Contents
 
 - [Project Description](#project-description)
-- [Technology Stack](#technology-stack)
+- [Video Demonstration](#-video-demonstration)
+- [App Preview & Screenshots](#-app-preview--screenshots)
+- [Technology Stack](#️-technology-stack)
   - [Backend](#backend-nodejs--express)
   - [Frontend](#frontend-nextjs)
-- [Features](#features)
+- [Features](#-features)
   - [Core E-commerce](#core-e-commerce-features)
   - [User Features](#user-features)
   - [Product Features](#product-features)
   - [Admin Features](#admin-features)
   - [Notifications](#notifications)
-- [API Endpoints](#api-endpoints)
-- [Security Features](#security-features)
-- [Performance Optimization](#performance-optimization)
-- [Getting Started](#getting-started)
+- [API Endpoints](#-api-endpoints)
+- [Security Features](#-security-features)
+- [Performance Optimization](#-performance-optimization)
+- [Getting Started](#-getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation](#installation)
   - [Environment Variables](#environment-variables)
   - [Running the Application](#running-the-application)
-- [Project Structure](#project-structure)
-- [License](#license)
+- [Project Structure](#-project-structure)
+- [License](#-license)
 
 ---
 
@@ -49,6 +54,30 @@ Bazar is a full-featured e-commerce platform specifically designed for the Nepal
 - 💳 **eSewa Integration** - Nepal's leading payment gateway
 - 📱 **Responsive Design** - Works on desktop, tablet, and mobile
 - 📊 **Admin Dashboard** - Comprehensive analytics and product management
+
+---
+
+## 📺 Video Demonstration
+
+For an in-depth video walkthrough where I explain the codebase architecture, design choices, and technical implementation details of Bazar, check out the video below:
+
+👉 **[Watch the Full Demo & Explanation Video on YouTube](https://youtu.-wvtIC3Oc5s)**
+
+---
+
+## 📸 App Preview & Screenshots
+
+### 1. Dynamic Marketplace Interface
+Clean grid layout displaying catalog inventory, dynamic product cards, real-time pricing structure, and instantaneous stock status indicators ("Out of Stock" / "Unavailable").
+![Bazar Marketplace](bazar1.jpg)
+
+### 2. Personalized User Dashboard
+Tailored greeting screen interface ("Hello, Ram!") tracking user shopping states with deep links to custom orders, active wishlists, cart verification, and a Gemini-powered recommendation carousel panel.
+![User Dashboard](bazar2.jpg)
+
+### 3. Native eSewa Secure Payment Gateway
+Mock validation checkout flow integrated directly with the production-ready structure of Nepal's primary gateway provider (eSewa), parsing real-time transaction balances securely.
+![eSewa Payment Integration](bazar3.jpg)
 
 ---
 
@@ -149,15 +178,15 @@ Bazar is a full-featured e-commerce platform specifically designed for the Nepal
 
 ### Authentication (`/api/auth`)
 
-| Method | Endpoint                    | Description                  |
-| ------ | --------------------------- | ---------------------------- |
-| POST   | `/api/auth/signup`          | User registration            |
-| POST   | `/api/auth/login`           | User login                   |
-| POST   | `/api/auth/logout`          | User logout                  |
-| POST   | `/api/auth/refresh-token`   | Refresh access token         |
-| POST   | `/api/auth/forgot-password` | Request password reset       |
-| POST   | `/api/auth/reset-password`  | Reset password with token    |
-| GET    | `/api/auth/profile`         | Get user profile (protected) |
+| Method | Endpoint                     | Description                  |
+| ------ | ---------------------------- | ---------------------------- |
+| POST   | `/api/auth/signup`           | User registration            |
+| POST   | `/api/auth/login`            | User login                   |
+| POST   | `/api/auth/logout`           | User logout                  |
+| POST   | `/api/auth/refresh-token`    | Refresh access token         |
+| POST   | `/api/auth/forgot-password`  | Request password reset       |
+| POST   | `/api/auth/reset-password`   | Reset password with token    |
+| GET    | `/api/auth/profile`          | Get user profile (protected) |
 
 ### Products (`/api/products`)
 
@@ -200,12 +229,12 @@ Bazar is a full-featured e-commerce platform specifically designed for the Nepal
 
 ### Addresses (`/api/addresses`)
 
-| Method | Endpoint                     | Description         |
-| ------ | ---------------------------- | ------------------- |
-| GET    | `/api/addresses`             | Get user addresses  |
-| POST   | `/api/addresses`             | Add address         |
-| PUT    | `/api/addresses/:id`         | Update address      |
-| DELETE | `/api/addresses/:id`         | Delete address      |
+| Method | Endpoint                    | Description          |
+| ------ | --------------------------- | -------------------- |
+| GET    | `/api/addresses`            | Get user addresses   |
+| POST   | `/api/addresses`            | Add address          |
+| PUT    | `/api/addresses/:id`        | Update address       |
+| DELETE | `/api/addresses/:id`        | Delete address       |
 | PATCH  | `/api/addresses/:id/default` | Set default address |
 
 ### Payments (`/api/payments`)
@@ -217,10 +246,10 @@ Bazar is a full-featured e-commerce platform specifically designed for the Nepal
 
 ### Reviews (`/api/reviews`)
 
-| Method | Endpoint                          | Description         |
-| ------ | --------------------------------- | ------------------- |
-| GET    | `/api/reviews/product/:productId` | Get product reviews |
-| POST   | `/api/reviews`                    | Create review       |
+| Method | Endpoint                          | Description          |
+| ------ | --------------------------------- | -------------------- |
+| GET    | `/api/reviews/product/:productId` | Get product reviews  |
+| POST   | `/api/reviews`                    | Create review        |
 
 ### Coupons (`/api/coupons`)
 
@@ -280,15 +309,11 @@ npm install
 # Install frontend dependencies
 cd ../frontend
 npm install
-```
 
-### Environment Variables
 
-Create `.env` files in both `backend` and `frontend` directories with the following variables:
+### Backend (backend/.env)
 
-#### Backend (`backend/.env`)
 
-```env
 # Server
 PORT=5000
 
@@ -320,72 +345,11 @@ ESEWA_SECRET_KEY=your_esewa_secret
 
 # Gemini AI
 GEMINI_API_KEY=your_gemini_api_key
-```
 
-#### Frontend (`frontend/.env.local`)
 
-```env
+### Frontend (frontend/.env.local)
 NEXT_PUBLIC_API_URL=http://localhost:5000/api
 NEXT_PUBLIC_APP_URL=http://localhost:3000
-```
 
-### Running the Application
 
-```bash
-# Start backend development server
-cd backend
-npm run dev
-
-# Start frontend development server (in a new terminal)
-cd frontend
-npm run dev
-```
-
-The application will be available at:
-
-- **Frontend**: http://localhost:3000
-- **Backend API**: http://localhost:5000
-
----
-
-## 📂 Project Structure
-
-```
-bazar/
-├── backend/
-│   ├── src/
-│   │   ├── controllers/      # Request handlers
-│   │   ├── middleware/       # Custom middleware
-│   │   ├── models/           # Mongoose models
-│   │   ├── routes/          # API routes
-│   │   ├── services/        # Business logic
-│   │   ├── lib/             # Utilities (db, redis, cloudinary, email)
-│   │   └── server.js        # Entry point
-│   ├── package.json
-│   └── .env.example
-│
-├── frontend/
-│   ├── app/                  # Next.js App Router
-│   │   ├── admin/           # Admin dashboard pages
-│   │   ├── checkout/        # Checkout flow
-│   │   ├── products/        # Product pages
-│   │   └── ...              # Other pages
-│   ├── components/          # React components
-│   │   └── ui/              # shadcn/ui components
-│   ├── package.json
-│   └── .env.local.example
-│
-└── README.md
-```
-
----
-
-## 📄 License
-
-This project is licensed under the **ISC License**.
-
----
-
-<p align="center">
-  Built with ❤️ for the Nepali e-commerce community
-</p>
+###
