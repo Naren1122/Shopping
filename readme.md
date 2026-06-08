@@ -13,7 +13,7 @@
 
 ## ✨ Live Demo & Walkthrough
 
-- **Website:** https://shopping-blue-two.vercel.app/
+- **Website:** https://shopping-blue-two.vercel.app/   [May take some time to load the backend, Have a patience]
 - **Video:** https://youtu.be/wvtIC3Oc5s
 
 ## 🧾 Why Bazar (HR/Recruiter view)
